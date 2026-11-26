@@ -30,8 +30,17 @@ const LIST_CLASS = {
 const fmtTrip = (t) => `${t.minutes} min`
 const fmtKm = (t) => `${t.km.toFixed(1)} km`
 
-/** Small maps (phones) start a little further out so the whole tower fits. */
-const homeView = () => (window.innerWidth < 1024 ? { ...HOME_VIEW, zoom: window.innerHeight < 640 ? 15.6 : 15.9 } : HOME_VIEW)
+/**
+ * The opening view. The tower's plot sits below the middle so the whole tower fits above it,
+ * and small maps (phones) start a little further out.
+ */
+function homeView(map) {
+  const phone = window.innerWidth < 1024
+  const short = phone && window.innerHeight < 640 // little map: keep the label clear of the map credits
+  const zoom = phone ? (short ? 15.25 : 15.9) : HOME_VIEW.zoom
+  const drop = short ? 0.1 : phone ? 0.18 : 0.13
+  return { ...HOME_VIEW, zoom, offset: [0, Math.round(map.getContainer().clientHeight * drop)] }
+}
 
 function markerEl(className, html) {
   const el = document.createElement('div')
@@ -103,7 +112,7 @@ export default function Location() {
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': '#4d9bff', 'line-width': 3.5 },
       })
-      map.easeTo({ ...homeView(), duration: prefersReducedMotion() ? 0 : 2600 })
+      map.easeTo({ ...homeView(map), duration: prefersReducedMotion() ? 0 : 2600 })
       setMapReady(true)
 
       // The 3D tower. Its code and model load after the map, so the map is never held up.
@@ -122,7 +131,7 @@ export default function Location() {
          <span class="rounded-md bg-[#d4a85a] px-2.5 py-1 text-[12px] font-semibold text-[#1a130d] whitespace-nowrap">${TOWER.name} · ${TOWER.area}</span>`,
       ),
       anchor: 'top',
-      offset: [0, 26], // clear of the tower's footprint
+      offset: [0, 36], // clear of the tower's footprint
     })
       .setLngLat(TOWER.at)
       .addTo(map)
@@ -198,7 +207,7 @@ export default function Location() {
   const resetMap = () => {
     setSelectedId(null)
     setParams({}, { replace: true })
-    mapRef.current?.flyTo({ ...homeView(), duration: prefersReducedMotion() ? 0 : 1400 })
+    if (mapRef.current) mapRef.current.flyTo({ ...homeView(mapRef.current), duration: prefersReducedMotion() ? 0 : 1400 })
   }
 
   const panel = (
