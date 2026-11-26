@@ -183,7 +183,7 @@ export default function Views() {
             <span>Terrace {fmtHeight(PANO_FLOORS[0].height)}</span>
           </div>
         </Chrome>
-        <div className="flex items-center justify-center gap-2 px-3 pb-5 compact:pb-4 land:shrink-0 land:!pb-2 land:pt-2 land:pl-0">
+        <div className="flex items-center justify-center gap-2 px-3 pb-6 land:shrink-0 land:pt-2 land:pl-0">
           {!hidden && (
             <Segmented label="Lighting" options={MODE_OPTIONS} value={mode} onChange={(m) => setFloorAndMode(floorIndex, m)} size="sm" className="bg-white/5" />
           )}

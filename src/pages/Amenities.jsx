@@ -128,7 +128,7 @@ export default function Amenities() {
   return (
     <div ref={stageRef} className="absolute inset-0 overflow-hidden">
       {isDesktop ? (
-        <div className="absolute inset-x-4 bottom-4 top-[88px] flex flex-col gap-3">
+        <div className="absolute inset-x-4 bottom-10 top-[88px] flex flex-col gap-3">
           <header className="flex shrink-0 items-end justify-between gap-4 px-1">
             <div>
               <p className="eyebrow">Level 10 &amp; Sky Terrace</p>
@@ -144,7 +144,7 @@ export default function Amenities() {
           {specs}
         </div>
       ) : (
-        <div className="absolute inset-x-0 bottom-[var(--nav-h)] top-0 flex flex-col gap-3 pb-3 pt-[calc(max(0.75rem,env(safe-area-inset-top))+3rem)] compact:gap-2 compact:pb-2 land:pt-[calc(max(0.5rem,env(safe-area-inset-top))+2.5rem)]">
+        <div className="absolute inset-x-0 bottom-[var(--nav-h)] top-0 flex flex-col gap-3 pb-6 pt-[calc(max(0.75rem,env(safe-area-inset-top))+3rem)] compact:gap-2 land:pt-[calc(max(0.5rem,env(safe-area-inset-top))+2.5rem)]">
           <MobileHeader />
           <header className="shrink-0 px-4 land:hidden">
             <p className="eyebrow compact:hidden">Level 10 &amp; Sky Terrace</p>

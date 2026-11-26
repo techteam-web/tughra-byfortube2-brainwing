@@ -291,7 +291,7 @@ export default function BookVisit() {
 
   if (!isDesktop) {
     return (
-      <div className="absolute inset-x-0 bottom-[var(--nav-h)] top-0 flex flex-col justify-center overflow-hidden px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] xs:px-6 md:px-8">
+      <div className="absolute inset-x-0 bottom-[var(--nav-h)] top-0 flex flex-col justify-center overflow-hidden px-4 pb-6 pt-[max(0.5rem,env(safe-area-inset-top))] xs:px-6 md:px-8">
         <div className="mx-auto w-full max-w-[480px] md:max-w-[560px] land:max-w-[640px]">{formEl}</div>
         <p className="mt-6 text-center text-[12px] text-ink/50 [@media(max-height:760px)]:hidden">
           {SALES_LOUNGE.name} · {SALES_LOUNGE.hours}
@@ -301,7 +301,7 @@ export default function BookVisit() {
   }
 
   return (
-    <div className="absolute inset-x-4 bottom-4 top-[88px] grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-4">
+    <div className="absolute inset-x-4 bottom-10 top-[88px] grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-4">
       {photo}
       <div className="solid-panel overflow-hidden rounded-2xl">
         <div className="mx-auto flex h-full max-w-[560px] flex-col justify-center px-8 py-8 compact:py-3">{formEl}</div>

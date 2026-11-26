@@ -185,6 +185,13 @@ button {
   pointer-events: auto;
 }
 
+/* Desktop map: lift its credits and zoom buttons above the Brainwing logo. */
+@media (min-width: 1024px) {
+  .maplibregl-ctrl-bottom-right {
+    bottom: 2.25rem;
+  }
+}
+
 /* MapLibre controls in the site palette. */
 .maplibregl-ctrl-group {
   background: var(--color-panel) !important;

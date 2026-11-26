@@ -123,7 +123,7 @@ export default function Home() {
 
           <DragHint visible={!dragged} className="absolute bottom-7 left-1/2 -translate-x-1/2" />
 
-          <dl className="glass hero-in absolute bottom-6 right-6 flex divide-x divide-white/10 rounded-2xl py-3">
+          <dl className="glass hero-in absolute bottom-12 right-6 flex divide-x divide-white/10 rounded-2xl py-3">
             {PROJECT_STATS.map((s) => (
               <div key={s.label} className="px-5">
                 <dt className="sr-only">{s.label}</dt>

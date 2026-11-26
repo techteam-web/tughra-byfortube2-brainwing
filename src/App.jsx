@@ -5,6 +5,7 @@ import { useGSAP } from '@gsap/react'
 import TopBar from './components/TopBar'
 import MobileNav from './components/MobileNav'
 import Loader from './components/Loader'
+import BrandBadge from './components/BrandBadge'
 import { PAGE_TITLES } from './data/site'
 import { prefersReducedMotion, useIsDesktop } from './lib/hooks'
 import { finishIntro, shouldPlayIntro } from './lib/intro'
@@ -59,6 +60,7 @@ export default function App() {
         </Suspense>
       </main>
       {!isDesktop && <MobileNav />}
+      <BrandBadge />
       {loading && <Loader onDone={() => setLoading(false)} />}
     </div>
   )

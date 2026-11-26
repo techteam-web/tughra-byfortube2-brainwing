@@ -240,7 +240,7 @@ export default function Location() {
                 type="button"
                 onClick={() => choosePlace(p)}
                 aria-current={active ? 'true' : undefined}
-                className={`flex h-full w-full items-center justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-left transition-colors compact:py-1.5 land:px-2.5 land:py-1.5 ${
+                className={`flex h-full w-full items-center justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-left transition-colors compact:py-1.5 land:px-2.5 land:py-1 ${
                   active ? 'border-route/70 bg-route/10' : 'border-white/8 bg-white/[0.03] hover:bg-white/[0.06]'
                 }`}
               >
@@ -287,7 +287,7 @@ export default function Location() {
         <div className="relative min-h-0 flex-1">
           <div ref={containerRef} className="absolute inset-0" />
         </div>
-        <div className="solid-panel relative -mt-3 flex shrink-0 flex-col rounded-t-2xl border-b-0 px-4 pb-3 pt-3 md:px-6 md:pb-4 md:pt-4 compact:pb-2 compact:pt-2 land:mt-0 land:w-[58%] land:justify-center land:rounded-none land:px-3 land:py-1.5">
+        <div className="solid-panel relative -mt-3 flex shrink-0 flex-col rounded-t-2xl border-b-0 px-4 pb-6 pt-3 md:px-6 md:pt-4 compact:pt-2 land:mt-0 land:w-[58%] land:justify-center land:rounded-none land:px-3 land:pb-5 land:pt-1">
           {routeBar}
           <div className="mt-3 flex flex-col compact:mt-2 land:mt-1.5">{panel}</div>
         </div>
@@ -301,7 +301,7 @@ export default function Location() {
       <aside className={`glass absolute bottom-6 left-6 top-[88px] flex flex-col rounded-2xl p-5 compact:bottom-4 compact:p-4 ${isShortDesktop ? 'w-[440px]' : 'w-[340px]'}`}>
         {panel}
       </aside>
-      <div className="absolute bottom-6 right-16">{routeBar}</div>
+      <div className="absolute bottom-12 right-16">{routeBar}</div>
     </div>
   )
 }

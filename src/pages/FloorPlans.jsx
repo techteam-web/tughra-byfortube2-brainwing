@@ -130,12 +130,12 @@ export default function FloorPlans() {
   const rows = [{ name: 'Carpet area', area: home.carpetArea }, ...home.rooms, { name: 'Balcony', area: home.balcony }]
 
   const layoutCard = (
-    <div className="rounded-xl bg-[var(--fp-panel)] px-6 py-5 compact:py-3">
+    <div className="rounded-xl bg-[var(--fp-panel)] px-6 py-5 compact:py-3 [@media(max-height:650px)]:py-2">
       <div className="flex items-center justify-between gap-3">
         <h2 className="whitespace-nowrap font-display text-[20px] font-medium text-[var(--fp-ink)] 2xl:text-[22px]">{home.label} layout</h2>
         {unitToggle}
       </div>
-      <dl className="mt-3 divide-y divide-[var(--fp-ink)]/10 text-[14px]">
+      <dl className="mt-3 divide-y divide-[var(--fp-ink)]/10 text-[14px] [@media(max-height:650px)]:mt-1.5 [@media(max-height:650px)]:text-[13px]">
         {rows.map((row) => (
           <div key={row.name} className="flex items-baseline justify-between gap-3 py-2.5 [@media(max-height:850px)]:py-1.5 [@media(max-height:650px)]:py-0.5">
             <dt className="text-[var(--fp-ink)]">{row.name}</dt>
@@ -167,7 +167,7 @@ export default function FloorPlans() {
   )
 
   const enquire = (
-    <Link to={`/book-visit?home=${home.id}`} className="btn-gold h-11 w-full text-[14px]">
+    <Link to={`/book-visit?home=${home.id}`} className="btn-gold h-11 w-full text-[14px] [@media(max-height:650px)]:h-9">
       Enquire About This Home
     </Link>
   )
@@ -225,7 +225,7 @@ export default function FloorPlans() {
   return (
     <div ref={root} className={`fp-${FP_THEME} absolute inset-0 bg-[var(--fp-bg)] text-[var(--fp-ink)]`}>
       {isDesktop ? (
-        <div className="absolute inset-x-0 bottom-0 top-[88px] grid grid-cols-[minmax(0,1fr)_16rem] gap-6 px-6 pb-6 xl:grid-cols-[15rem_minmax(0,1fr)_17rem] xl:gap-10 xl:px-10 xl:pb-8 2xl:grid-cols-[17rem_minmax(0,1fr)_19rem]">
+        <div className="absolute inset-x-0 bottom-0 top-[88px] grid grid-cols-[minmax(0,1fr)_16rem] gap-6 px-6 pb-10 xl:grid-cols-[15rem_minmax(0,1fr)_17rem] xl:gap-10 xl:px-10 2xl:grid-cols-[17rem_minmax(0,1fr)_19rem]">
           <aside className="fp-in hidden self-center xl:block">
             <p className="text-[12px] uppercase tracking-[0.24em] text-[var(--fp-accent)]">Residences</p>
             <h1 className="mt-4 font-display text-[clamp(36px,3.2vw,50px)] font-medium leading-[1.05] tracking-[-0.01em]">
@@ -256,7 +256,7 @@ export default function FloorPlans() {
         </div>
       ) : (
         <div
-          className="absolute inset-x-0 bottom-[var(--nav-h)] top-0 flex flex-col gap-2.5 px-3 pb-2.5 pt-[max(0.75rem,env(safe-area-inset-top))] xs:px-4 md:gap-4 md:px-6 md:pb-4 md:pt-6 land:gap-1.5 land:pb-1.5 land:pt-1.5"
+          className="absolute inset-x-0 bottom-[var(--nav-h)] top-0 flex flex-col gap-2.5 px-3 pb-6 pt-[max(0.75rem,env(safe-area-inset-top))] xs:px-4 md:gap-4 md:px-6 md:pt-6 land:gap-1.5 land:pt-1.5"
         >
           <header className="fp-in shrink-0 land:flex land:items-center land:justify-between land:gap-4">
             <div>
@@ -437,11 +437,11 @@ function PlansView({ home, level, view, unit, isDesktop, onView, onHome, onClose
     <div ref={panel} className="absolute inset-0 z-30 bg-[var(--fp-bg)]" role="dialog" aria-label={`${home.title} plans, ${level.label}`}>
       {isDesktop ? (
         <>
-          <div className="absolute inset-x-4 bottom-4 top-[88px] overflow-hidden rounded-2xl border border-[var(--fp-ink)]/10">{drawing}</div>
+          <div className="absolute inset-x-4 bottom-10 top-[88px] overflow-hidden rounded-2xl border border-[var(--fp-ink)]/10">{drawing}</div>
           {backRow}
           <div className="pv-in absolute left-10 top-1/2 z-10 w-fit -translate-y-1/2">{homePicker}</div>
           <div className="pv-in absolute right-10 top-1/2 z-10 w-[17rem] -translate-y-1/2">{summary}</div>
-          <div className="pv-in absolute bottom-10 left-1/2 z-10 -translate-x-1/2">{viewToggle}</div>
+          <div className="pv-in absolute bottom-16 left-1/2 z-10 -translate-x-1/2">{viewToggle}</div>
         </>
       ) : (
         <div className="absolute inset-x-0 bottom-[var(--nav-h)] top-0 flex flex-col land:flex-row">
@@ -449,7 +449,7 @@ function PlansView({ home, level, view, unit, isDesktop, onView, onHome, onClose
             <div className="absolute inset-0">{drawing}</div>
             {backRow}
           </div>
-          <div className="flex shrink-0 flex-col gap-3 p-3 pb-4 land:w-56 land:justify-center land:pb-3">
+          <div className="flex shrink-0 flex-col gap-3 p-3 pb-6 land:w-56 land:justify-center">
             <div className="pv-in mx-auto">{viewToggle}</div>
             <div className="pv-in">{homePicker}</div>
           </div>
