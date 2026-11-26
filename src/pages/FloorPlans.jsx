@@ -4,7 +4,8 @@ import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 import { ArrowLeft, Download, FileImage, Minus, Plus } from 'lucide-react'
 import { DEFAULT_LEVEL, LEVEL_KIND_LABEL, LEVEL_NOTES, RESIDENCES, SQFT_TO_SQM, TOWER_LEVELS } from '../data/residences'
-import { prefersReducedMotion, useIsDesktop } from '../lib/hooks'
+import { prefersReducedMotion, useIsDesktop, useIsRoomy } from '../lib/hooks'
+import { Segmented } from '../components/ui'
 import TowerPicker from '../components/TowerPicker'
 import Turntable from '../components/Turntable'
 
@@ -17,6 +18,10 @@ const TOWER_COLORS = {
 
 const RESIDENCE_COUNT = TOWER_LEVELS.filter((l) => l.kind === 'residence').length
 const isResidence = (l) => l?.kind === 'residence'
+const SECTIONS = [
+  { value: 'tower', label: 'Tower' },
+  { value: 'details', label: 'Layout' },
+]
 
 function formatArea(sqft, unit) {
   if (sqft == null) return 'To be confirmed'
@@ -50,6 +55,9 @@ export default function FloorPlans() {
   const view = params.get('view') === '2d' ? '2d' : 'iso'
   const [hoveredId, setHoveredId] = useState(null)
   const [unit, setUnit] = useState('sqft')
+  // Phones show one section at a time; portrait tablets have room for both.
+  const showBoth = useIsRoomy()
+  const [section, setSection] = useState('tower')
 
   const level = TOWER_LEVELS.find((l) => l.id === levelId)
   const home = RESIDENCES.find((r) => r.id === homeId)
@@ -119,17 +127,39 @@ export default function FloorPlans() {
     </div>
   )
 
+  const rows = [{ name: 'Carpet area', area: home.carpetArea }, ...home.rooms, { name: 'Balcony', area: home.balcony }]
+
   const layoutCard = (
-    <div className="rounded-xl bg-[var(--fp-panel)] px-6 py-5">
+    <div className="rounded-xl bg-[var(--fp-panel)] px-6 py-5 compact:py-3">
       <div className="flex items-center justify-between gap-3">
         <h2 className="whitespace-nowrap font-display text-[20px] font-medium text-[var(--fp-ink)] 2xl:text-[22px]">{home.label} layout</h2>
         {unitToggle}
       </div>
       <dl className="mt-3 divide-y divide-[var(--fp-ink)]/10 text-[14px]">
-        {[{ name: 'Carpet area', area: home.carpetArea }, ...home.rooms, { name: 'Balcony', area: home.balcony }].map((row) => (
-          <div key={row.name} className="flex items-baseline justify-between gap-3 py-2.5">
+        {rows.map((row) => (
+          <div key={row.name} className="flex items-baseline justify-between gap-3 py-2.5 [@media(max-height:850px)]:py-1.5 [@media(max-height:650px)]:py-0.5">
             <dt className="text-[var(--fp-ink)]">{row.name}</dt>
             <dd className={`shrink-0 ${row.area == null ? 'text-[var(--fp-ink-soft)]' : 'font-semibold text-[var(--fp-ink)]'}`}>{formatArea(row.area, unit)}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  )
+
+  // Phone and tablet version: rooms in columns so every row fits without scrolling.
+  const compactLayoutCard = (
+    <div className="rounded-xl bg-[var(--fp-panel)] px-4 py-3 xs:py-4 land:py-2">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="whitespace-nowrap font-display text-[18px] font-medium text-[var(--fp-ink)] land:text-[16px]">{home.label} layout</h2>
+        {unitToggle}
+      </div>
+      <dl className="mt-2 grid grid-cols-2 gap-x-4 md:grid-cols-5 land:mt-1 land:grid-cols-5">
+        {rows.map((row) => (
+          <div key={row.name} className="border-t border-[var(--fp-ink)]/10 py-1.5 xs:py-2.5 md:py-2 land:py-1">
+            <dt className="truncate text-[12px] text-[var(--fp-ink-soft)]">{row.name}</dt>
+            <dd className={`text-[13px] xs:text-[14px] ${row.area == null ? 'text-[var(--fp-ink-soft)]' : 'font-semibold text-[var(--fp-ink)]'}`}>
+              {formatArea(row.area, unit)}
+            </dd>
           </div>
         ))}
       </dl>
@@ -225,30 +255,59 @@ export default function FloorPlans() {
           </aside>
         </div>
       ) : (
-        <div className="absolute inset-0 overflow-y-auto px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))]">
-          <p className="fp-in text-[12px] uppercase tracking-[0.24em] text-[var(--fp-accent)]">Residences</p>
-          <h1 className="fp-in mt-2 font-display text-[30px] font-medium leading-[1.05]">Homes Designed to Inspire</h1>
-          <div className="fp-in mt-4">{homeList}</div>
-          <section className="fp-in mt-4 overflow-hidden rounded-md bg-[var(--fp-panel)] p-5">
-            {elevation}
-            <div className="relative -mx-5 mt-2 h-[52vh]">{tower}</div>
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <span className="text-[14px] text-[var(--fp-ink-soft)]">{isResidence(shown) ? 'Floor' : LEVEL_KIND_LABEL[shown.kind]}</span>
-                <span className="block font-display text-[56px] font-medium leading-[0.9] text-[var(--fp-accent)]">{shown.num}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => openPlans(level.id)}
-                className="rounded-full bg-[var(--fp-button)] px-6 py-3 text-[15px] font-semibold text-[var(--fp-button-ink)]"
-              >
-                Open plans
-              </button>
+        <div
+          className="absolute inset-x-0 bottom-[var(--nav-h)] top-0 flex flex-col gap-2.5 px-3 pb-2.5 pt-[max(0.75rem,env(safe-area-inset-top))] xs:px-4 md:gap-4 md:px-6 md:pb-4 md:pt-6 land:gap-1.5 land:pb-1.5 land:pt-1.5"
+        >
+          <header className="fp-in shrink-0 land:flex land:items-center land:justify-between land:gap-4">
+            <div>
+              <p className="text-[12px] uppercase tracking-[0.24em] text-[var(--fp-accent)] compact:hidden">Residences</p>
+              <h1 className="mt-1 font-display text-[22px] font-medium leading-[1.1] xs:text-[26px] md:text-[32px] compact:mt-0 compact:text-[20px] land:text-[16px]">
+                Homes Designed to Inspire
+              </h1>
             </div>
-            <p className="mt-3 text-[13px] text-[var(--fp-ink-soft)]">Tap a floor on the tower to see its plans.</p>
-          </section>
-          <div className="fp-in mt-4">{layoutCard}</div>
-          <div className="mt-3">{enquire}</div>
+            <div className="mt-2.5 flex items-center justify-between gap-3 land:mt-0">
+              <div className="land:mr-2">{homeList}</div>
+              {!showBoth && (
+                <Segmented label="Floor plan section" options={SECTIONS} value={section} onChange={setSection} size="sm" className="shrink-0 bg-white/5" />
+              )}
+            </div>
+          </header>
+
+          {/* Both sections stay mounted so the tower keeps its loaded frames. */}
+          <div className={`fp-in relative min-h-0 flex-1 ${showBoth ? 'flex flex-col gap-4' : ''}`}>
+            <section
+              className={`flex min-h-0 flex-col overflow-hidden rounded-xl bg-[var(--fp-panel)] p-3 xs:p-4 land:flex-row land:p-2 ${
+                showBoth ? 'flex-1' : `absolute inset-0 ${section === 'tower' ? '' : 'invisible'}`
+              }`}
+            >
+              <div className="shrink-0 compact:hidden">{elevation}</div>
+              <div className="relative -mx-3 min-h-0 flex-1 xs:-mx-4 land:order-2 land:mx-0">
+                <div className="absolute inset-0 land:left-1/2 land:right-auto land:aspect-video land:max-w-full land:-translate-x-1/2">{tower}</div>
+              </div>
+              <div className="flex shrink-0 items-end justify-between gap-4 land:order-1 land:w-40 land:flex-col land:items-start land:justify-center land:gap-3 land:pl-2">
+                <div>
+                  <span className="text-[14px] text-[var(--fp-ink-soft)]">{isResidence(shown) ? 'Floor' : LEVEL_KIND_LABEL[shown.kind]}</span>
+                  <span className="block font-display text-[44px] font-medium leading-[0.9] text-[var(--fp-accent)] xs:text-[56px] compact:text-[40px]">{shown.num}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openPlans(level.id)}
+                  className="rounded-full bg-[var(--fp-button)] px-6 py-3 text-[15px] font-semibold text-[var(--fp-button-ink)] compact:py-2.5 compact:text-[14px]"
+                >
+                  Open plans
+                </button>
+                <p className="hidden text-[13px] leading-snug text-[var(--fp-ink-soft)] land:block">Tap a floor on the tower to see its plans.</p>
+              </div>
+            </section>
+            <div
+              className={`flex flex-col justify-center gap-2.5 land:gap-1.5 ${
+                showBoth ? 'shrink-0' : `absolute inset-0 ${section === 'details' ? '' : 'invisible'}`
+              }`}
+            >
+              {compactLayoutCard}
+              {enquire}
+            </div>
+          </div>
         </div>
       )}
 
@@ -301,7 +360,7 @@ function PlansView({ home, level, view, unit, isDesktop, onView, onHome, onClose
           type="button"
           onClick={() => onView(k)}
           aria-pressed={view === k}
-          className={`rounded-full px-5 py-2 text-[12px] uppercase tracking-[0.16em] transition-colors ${
+          className={`whitespace-nowrap rounded-full px-5 py-2 text-[12px] max-xs:px-3.5 max-lg:land:px-2.5 max-lg:land:tracking-[0.06em] uppercase tracking-[0.16em] transition-colors ${
             view === k ? 'bg-[var(--fp-accent)] text-[var(--fp-bg)]' : 'text-[var(--fp-ink-soft)]'
           }`}
         >
@@ -316,7 +375,7 @@ function PlansView({ home, level, view, unit, isDesktop, onView, onHome, onClose
       <span className="block text-[12px] uppercase tracking-[0.22em] text-[var(--fp-accent)]">
         Level {level.level} · {home.typeName}
       </span>
-      <div className="mt-2.5 flex flex-col gap-2.5">
+      <div className="mt-2.5 flex flex-col gap-2.5 max-lg:flex-row max-lg:gap-6 max-xs:gap-4 max-lg:land:flex-col max-lg:land:gap-3">
         {RESIDENCES.map((r, i) => {
           const active = r.id === home.id
           return (
@@ -324,7 +383,7 @@ function PlansView({ home, level, view, unit, isDesktop, onView, onHome, onClose
               {active && <span className="absolute left-0 top-[0.2em] h-[0.95em] w-[2px] bg-[var(--fp-accent)]" />}
               <button type="button" onClick={() => onHome(r.id)} aria-pressed={active} className="flex items-baseline gap-2.5 text-left">
                 <span className="text-[12px] tabular-nums text-[var(--fp-ink-soft)]">{String(i + 1).padStart(2, '0')}</span>
-                <span className={`font-display text-[17px] leading-none ${active ? 'text-[var(--fp-ink)]' : 'text-[var(--fp-ink-soft)]'}`}>{r.title}</span>
+                <span className={`whitespace-nowrap font-display text-[17px] leading-none max-xs:text-[15px] ${active ? 'text-[var(--fp-ink)]' : 'text-[var(--fp-ink-soft)]'}`}>{r.title}</span>
               </button>
             </div>
           )
@@ -357,38 +416,43 @@ function PlansView({ home, level, view, unit, isDesktop, onView, onHome, onClose
     </div>
   )
 
+  const drawing =
+    view === 'iso' ? <Turntable frames={home.isoFrames} alt={`${home.title} isometric layout`} className="h-full w-full" /> : <PlanDrawing home={home} />
+
+  const backRow = (
+    <div className={`pv-in absolute z-10 flex items-center gap-3 ${isDesktop ? 'left-10 top-[108px]' : 'left-3 top-[max(0.75rem,env(safe-area-inset-top))]'}`}>
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Back to the tower"
+        className="grid h-10 w-10 place-items-center rounded-full border border-[var(--fp-ink)]/20 bg-[var(--fp-bg)]/92 text-[var(--fp-ink)]"
+      >
+        <ArrowLeft size={18} />
+      </button>
+      <span className="rounded-full bg-[var(--fp-bg)]/92 px-3 py-1.5 text-[13px] text-[var(--fp-ink-soft)]">{level.label}</span>
+    </div>
+  )
+
   return (
     <div ref={panel} className="absolute inset-0 z-30 bg-[var(--fp-bg)]" role="dialog" aria-label={`${home.title} plans, ${level.label}`}>
-      <div className={`absolute overflow-hidden ${isDesktop ? 'inset-x-4 bottom-4 top-[88px] rounded-2xl border border-[var(--fp-ink)]/10' : 'inset-0'}`}>
-        {view === 'iso' ? (
-          <Turntable frames={home.isoFrames} alt={`${home.title} isometric layout`} className="h-full w-full" />
-        ) : (
-          <PlanDrawing home={home} />
-        )}
-      </div>
-
-      <div className={`pv-in absolute left-5 z-10 flex items-center gap-3 ${isDesktop ? 'top-[108px] left-10' : 'top-[max(1rem,env(safe-area-inset-top))]'}`}>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Back to the tower"
-          className="grid h-10 w-10 place-items-center rounded-full border border-[var(--fp-ink)]/20 bg-[var(--fp-bg)]/92 text-[var(--fp-ink)]"
-        >
-          <ArrowLeft size={18} />
-        </button>
-        <span className="rounded-full bg-[var(--fp-bg)]/92 px-3 py-1.5 text-[13px] text-[var(--fp-ink-soft)]">{level.label}</span>
-      </div>
-
       {isDesktop ? (
         <>
+          <div className="absolute inset-x-4 bottom-4 top-[88px] overflow-hidden rounded-2xl border border-[var(--fp-ink)]/10">{drawing}</div>
+          {backRow}
           <div className="pv-in absolute left-10 top-1/2 z-10 w-fit -translate-y-1/2">{homePicker}</div>
           <div className="pv-in absolute right-10 top-1/2 z-10 w-[17rem] -translate-y-1/2">{summary}</div>
           <div className="pv-in absolute bottom-10 left-1/2 z-10 -translate-x-1/2">{viewToggle}</div>
         </>
       ) : (
-        <div className="absolute inset-x-4 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-10 flex flex-col gap-3">
-          <div className="pv-in mx-auto">{viewToggle}</div>
-          <div className="pv-in">{homePicker}</div>
+        <div className="absolute inset-x-0 bottom-[var(--nav-h)] top-0 flex flex-col land:flex-row">
+          <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
+            <div className="absolute inset-0">{drawing}</div>
+            {backRow}
+          </div>
+          <div className="flex shrink-0 flex-col gap-3 p-3 pb-4 land:w-56 land:justify-center land:pb-3">
+            <div className="pv-in mx-auto">{viewToggle}</div>
+            <div className="pv-in">{homePicker}</div>
+          </div>
         </div>
       )}
     </div>
@@ -404,8 +468,8 @@ function PlanDrawing({ home }) {
     <div className="absolute inset-0 overflow-auto bg-cream">
       {home.plan2d ? (
         <>
-          <img src={home.plan2d} alt={`${home.title} 2D floor plan`} className="h-full w-full origin-center object-contain p-24 transition-transform" style={style} />
-          <div className="absolute bottom-24 right-10 flex flex-col gap-2">
+          <img src={home.plan2d} alt={`${home.title} 2D floor plan`} className="h-full w-full origin-center object-contain p-4 pt-16 transition-transform lg:p-24" style={style} />
+          <div className="absolute right-4 top-20 flex flex-col gap-2 lg:bottom-24 lg:right-10 lg:top-auto">
             <button type="button" aria-label="Zoom in" className={zoomBtn} disabled={zoom >= 3} onClick={() => setZoom((z) => Math.min(3, z + 0.25))}>
               <Plus size={16} />
             </button>

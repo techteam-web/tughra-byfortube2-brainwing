@@ -131,7 +131,7 @@ export default function Gallery() {
 
   if (!isDesktop) {
     return (
-      <div className="absolute inset-0 flex flex-col gap-3 px-3 pb-[calc(4.75rem+env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))]">
+      <div className="absolute inset-0 flex flex-col gap-3 px-3 pb-[calc(var(--nav-h)+0.75rem)] pt-[max(0.75rem,env(safe-area-inset-top))] land:gap-1.5 land:pb-[calc(var(--nav-h)+0.375rem)] land:pt-1.5">
         <div className="flex min-h-0 flex-1 items-center justify-center [container-type:size]">{stage}</div>
         <div className="flex shrink-0 items-center justify-between px-1">
           {counter}

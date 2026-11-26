@@ -48,5 +48,11 @@ export function useMediaQuery(query) {
 /** Desktop layout = top bar + side panels. Below this width the phone layout is used. */
 export const useIsDesktop = () => useMediaQuery('(min-width: 1024px)')
 
+/** A phone held sideways: very little height, so panels sit side by side. */
+export const useIsLandscapePhone = () => useMediaQuery('(orientation: landscape) and (max-height: 500px)')
+
+/** Tablet in portrait: enough room to show everything at once. */
+export const useIsRoomy = () => useMediaQuery('(min-width: 768px) and (min-height: 900px)')
+
 export const prefersReducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches

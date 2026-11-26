@@ -15,6 +15,20 @@ const RANGE = [-FRAME_COUNT / 2, FRAME_COUNT / 2] // half a turn either way
 const PX_PER_FRAME = 9
 const CLICK_SLOP = 6
 
+// The tower itself (plus a little air) in frame space. It must always be fully visible.
+const KEEP_W = 420
+const KEEP_TOP = 80
+const KEEP_BOTTOM = 1010
+
+/** "Cover" the box like a photo, but zoom out rather than ever cropping the tower. */
+function fitFrame(w, h) {
+  const scale = Math.min(Math.max(w / FRAME_W, h / FRAME_H), w / KEEP_W, h / (KEEP_BOTTOM - KEEP_TOP))
+  const drawnH = FRAME_H * scale
+  const centred = h / 2 - ((KEEP_TOP + KEEP_BOTTOM) / 2) * scale
+  const offY = drawnH <= h ? (h - drawnH) / 2 : Math.min(0, Math.max(h - drawnH, centred))
+  return { scale, offX: (w - FRAME_W * scale) / 2, offY }
+}
+
 const pad3 = (n) => String(n).padStart(3, '0')
 const FRAMES = Array.from({ length: FRAME_COUNT }, (_, i) => `/towerframes/${pad3(i + 1)}.webp`)
 const MASKS = Array.from({ length: FRAME_COUNT }, (_, i) => `/towerframes/floors/${pad3(i + 1)}.png`)
@@ -40,10 +54,8 @@ export default function TowerPicker({ levels, selectedId, hoveredId, onHover, on
   const [ready, setReady] = useState(false)
   const [turned, setTurned] = useState(false)
 
-  // Frame → container mapping ("cover", like the frames themselves).
-  const scale = size.w && size.h ? Math.max(size.w / FRAME_W, size.h / FRAME_H) : 0
-  const offX = (size.w - FRAME_W * scale) / 2
-  const offY = (size.h - FRAME_H * scale) / 2
+  // Frame → container mapping, shared by the picture, the highlight and clicks.
+  const { scale, offX, offY } = size.w && size.h ? fitFrame(size.w, size.h) : { scale: 0, offX: 0, offY: 0 }
 
   const paint = useCallback(() => {
     const canvas = canvasRef.current
@@ -55,11 +67,9 @@ export default function TowerPicker({ levels, selectedId, hoveredId, onHover, on
     const frac = pos - base
     const draw = (img, alpha) => {
       if (!img?.complete || !img.naturalWidth) return false
-      const s = Math.max(width / img.naturalWidth, height / img.naturalHeight)
-      const w = img.naturalWidth * s
-      const h = img.naturalHeight * s
+      const fit = fitFrame(width, height)
       ctx.globalAlpha = alpha
-      ctx.drawImage(img, (width - w) / 2, (height - h) / 2, w, h)
+      ctx.drawImage(img, fit.offX, fit.offY, FRAME_W * fit.scale, FRAME_H * fit.scale)
       ctx.globalAlpha = 1
       return true
     }
@@ -303,7 +313,7 @@ export default function TowerPicker({ levels, selectedId, hoveredId, onHover, on
         }}
       />
       <span
-        className={`pointer-events-none absolute bottom-[18%] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-[var(--fp-ink)]/15 bg-[var(--fp-bg)]/90 px-4 py-1.5 text-[12px] uppercase tracking-[0.2em] text-[var(--fp-ink-soft)] transition-opacity duration-500 ${
+        className={`pointer-events-none absolute bottom-[18%] max-lg:bottom-1 max-lg:py-1 max-lg:tracking-[0.12em] land:hidden left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-[var(--fp-ink)]/15 bg-[var(--fp-bg)]/90 px-4 py-1.5 text-[12px] uppercase tracking-[0.2em] text-[var(--fp-ink-soft)] transition-opacity duration-500 ${
           turned ? 'opacity-0' : 'opacity-100'
         }`}
       >

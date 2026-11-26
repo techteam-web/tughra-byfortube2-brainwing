@@ -136,20 +136,22 @@ export default function Home() {
       ) : (
         <>
           <MobileHeader />
-          <section className="pointer-events-none absolute inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] px-5 pb-5">
-            <DragHint visible={!dragged} className="mx-auto mb-5 w-fit" />
+          <section className="pointer-events-none absolute inset-x-0 bottom-[var(--nav-h)] px-4 pb-6 xs:px-5 xs:pb-7 md:px-8 md:pb-10 land:right-auto land:max-w-[70%] land:pb-4">
+            <DragHint visible={!dragged} className="mx-auto mb-5 w-fit compact:mb-3 land:hidden" />
             <p className="hero-in eyebrow">Mumbai Central · 4 &amp; 5 BHK</p>
-            <h1 className="hero-in mt-3 font-display text-[34px] font-semibold leading-[1.05] tracking-[-0.02em]">
+            <h1 className="hero-in mt-3 font-display text-[30px] font-semibold leading-[1.05] tracking-[-0.02em] xs:text-[34px] md:text-[48px] land:mt-1.5 land:text-[28px]">
               A World Away
               <br />
               From Ordinary.
             </h1>
-            <p className="hero-in mt-3 text-[14px] leading-relaxed text-ink/80">
+            <p className="hero-in mt-3 text-[14px] leading-relaxed text-ink/80 md:text-[16px] land:mt-1.5">
               108.9 m sky terrace overlooking the Arabian Sea.
             </p>
-            <Link to="/views" className="hero-in btn-gold pointer-events-auto mt-5 h-12 w-full text-[15px]">
-              Explore 360° Views <ArrowRight size={16} />
-            </Link>
+            <div className="hero-in mt-5 compact:mt-3">
+              <Link to="/views" className="btn-gold pointer-events-auto h-12 w-full text-[15px] compact:h-11 md:w-80 land:h-10 land:w-60">
+                Explore 360° Views <ArrowRight size={16} />
+              </Link>
+            </div>
           </section>
         </>
       )}

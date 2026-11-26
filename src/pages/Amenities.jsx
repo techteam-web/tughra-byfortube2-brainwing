@@ -3,7 +3,7 @@ import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 import { Expand } from 'lucide-react'
 import { AMENITIES, AMENITY_FILTERS, HOME_SPECS } from '../data/media'
-import { prefersReducedMotion, useIsDesktop } from '../lib/hooks'
+import { prefersReducedMotion, useIsDesktop, useMediaQuery } from '../lib/hooks'
 import { Lightbox } from '../components/ui'
 import { MobileHeader } from '../components/MobileNav'
 
@@ -50,10 +50,10 @@ function AmenityCard({ amenity, span = '', large, onOpen, className = '' }) {
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-[900ms] ease-silk group-hover:scale-[1.05]"
       />
       <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-      <span className={`absolute bottom-0 left-0 right-0 ${large ? 'p-6' : 'p-4 xl:p-5'}`}>
-        <span className="eyebrow block">{amenity.eyebrow}</span>
-        <span className={`mt-1 block font-display font-semibold leading-tight ${large ? 'text-[26px]' : 'text-[18px] xl:text-[20px]'}`}>{amenity.title}</span>
-        <span className="mt-1 block text-[13px] text-ink/70">{amenity.blurb}</span>
+      <span className={`absolute bottom-0 left-0 right-0 ${large ? 'p-4 md:p-6 land:p-3' : 'p-4 xl:p-5'}`}>
+        <span className="eyebrow block land:hidden">{amenity.eyebrow}</span>
+        <span className={`mt-1 block font-display font-semibold leading-tight ${large ? 'text-[20px] xs:text-[24px] md:text-[26px] land:text-[18px]' : 'text-[18px] xl:text-[20px]'}`}>{amenity.title}</span>
+        <span className={`mt-1 block text-[13px] text-ink/70 ${large ? 'compact:hidden' : ''}`}>{amenity.blurb}</span>
       </span>
       <span className="glass absolute right-3 top-3 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] opacity-0 transition-opacity group-hover:opacity-100">
         <Expand size={13} /> {amenity.images.length > 1 ? `${amenity.images.length} photos` : 'View'}
@@ -64,6 +64,8 @@ function AmenityCard({ amenity, span = '', large, onOpen, className = '' }) {
 
 export default function Amenities() {
   const isDesktop = useIsDesktop()
+  // On short phones the specs only show under their own filter, so the photos keep their height.
+  const isShort = useMediaQuery('(max-height: 700px)')
   const [filter, setFilter] = useState('all')
   const [lightbox, setLightbox] = useState(null)
   const stageRef = useRef(null)
@@ -89,14 +91,14 @@ export default function Amenities() {
   )
 
   const filters = (
-    <div className="flex gap-1.5 overflow-x-auto" role="group" aria-label="Filter amenities">
+    <div className="flex gap-1.5 overflow-x-auto [scrollbar-width:none]" role="group" aria-label="Filter amenities">
       {AMENITY_FILTERS.map((f) => (
         <button
           key={f.key}
           type="button"
           onClick={() => setFilter(f.key)}
           aria-pressed={filter === f.key}
-          className={`shrink-0 rounded-full px-4 py-2 text-[13px] font-medium transition-colors ${
+          className={`shrink-0 rounded-full px-4 py-2 text-[13px] max-lg:compact:px-3 max-lg:compact:py-1.5 max-lg:compact:text-[12px] font-medium transition-colors ${
             filter === f.key ? 'bg-gold text-[#1a130d]' : 'border border-white/12 text-ink/75 hover:text-ink'
           }`}
         >
@@ -110,7 +112,7 @@ export default function Amenities() {
   const specs = (
     <section
       aria-label="Home specifications"
-      className={`am-specs solid-panel grid shrink-0 rounded-2xl ${isDesktop ? 'grid-cols-4 px-6 py-4' : 'grid-cols-2 gap-y-3 px-4 py-3'} ${
+      className={`am-specs solid-panel grid shrink-0 rounded-2xl ${isDesktop ? 'grid-cols-4 px-6 py-4' : 'grid-cols-2 gap-y-3 px-4 py-3 md:grid-cols-4 land:grid-cols-4 land:py-2'} ${
         filter === 'specs' ? 'border-gold/60' : ''
       }`}
     >
@@ -142,19 +144,19 @@ export default function Amenities() {
           {specs}
         </div>
       ) : (
-        <div className="absolute inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] top-0 flex flex-col gap-3 pb-3 pt-[calc(max(0.75rem,env(safe-area-inset-top))+3rem)]">
+        <div className="absolute inset-x-0 bottom-[var(--nav-h)] top-0 flex flex-col gap-3 pb-3 pt-[calc(max(0.75rem,env(safe-area-inset-top))+3rem)] compact:gap-2 compact:pb-2 land:pt-[calc(max(0.5rem,env(safe-area-inset-top))+2.5rem)]">
           <MobileHeader />
-          <header className="shrink-0 px-4">
-            <p className="eyebrow">Level 10 &amp; Sky Terrace</p>
-            <h1 className="mt-1 font-display text-[24px] font-semibold leading-tight">Curated Lifestyle Spaces</h1>
+          <header className="shrink-0 px-4 land:hidden">
+            <p className="eyebrow compact:hidden">Level 10 &amp; Sky Terrace</p>
+            <h1 className="mt-1 font-display text-[24px] font-semibold leading-tight compact:mt-0 compact:text-[19px]">Curated Lifestyle Spaces</h1>
           </header>
           <div className="shrink-0 px-4">{filters}</div>
           <div className="flex min-h-0 flex-1 snap-x snap-mandatory gap-3 overflow-x-auto px-4 [scrollbar-width:none]">
             {shown.map((a) => (
-              <AmenityCard key={a.id} amenity={a} large onOpen={() => openPhoto(a)} className="h-full w-[84%] shrink-0 snap-center" />
+              <AmenityCard key={a.id} amenity={a} large onOpen={() => openPhoto(a)} className="h-full w-[84%] shrink-0 snap-center md:w-[62%] land:w-[48%]" />
             ))}
           </div>
-          <div className="shrink-0 px-4">{specs}</div>
+          {(!isShort || filter === 'specs') && <div className="shrink-0 px-4">{specs}</div>}
         </div>
       )}
 

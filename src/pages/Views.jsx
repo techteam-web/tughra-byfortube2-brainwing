@@ -152,18 +152,19 @@ export default function Views() {
 
   if (!isDesktop) {
     return (
-      <div className="absolute inset-0 flex flex-col pb-[calc(4rem+env(safe-area-inset-bottom))]">
+      <div className="absolute inset-0 flex flex-col pb-[var(--nav-h)]">
         <div className="relative min-h-0 flex-1">
           <div ref={panoRef} className="absolute inset-0" />
           {tags}
           <Chrome hidden={hidden} className="pointer-events-none absolute inset-x-0 top-0 flex justify-center pt-[max(0.75rem,env(safe-area-inset-top))]">
             {compassPill}
           </Chrome>
-          <DragHint visible={!dragged && !hidden} className="absolute bottom-3 left-1/2 -translate-x-1/2" />
+          <DragHint visible={!dragged && !hidden} className="absolute bottom-3 left-1/2 w-max max-w-[92%] -translate-x-1/2 land:hidden" />
         </div>
-        <Chrome hidden={hidden} className="solid-panel rounded-t-2xl border-b-0 px-5 pb-4 pt-4">
-          <p className="eyebrow">Floor Height</p>
-          <p className="mt-1 font-display text-[20px] font-semibold">
+        <div className="shrink-0 bg-panel land:flex land:items-center">
+        <Chrome hidden={hidden} className="solid-panel rounded-t-2xl border-b-0 px-4 pb-4 pt-4 xs:px-5 compact:pb-2 compact:pt-3 land:min-w-0 land:flex-1 land:rounded-none land:border-0 land:py-1.5">
+          <p className="eyebrow compact:hidden">Floor Height</p>
+          <p className="mt-1 font-display text-[20px] font-semibold compact:mt-0 compact:text-[17px] land:text-[14px]">
             {floor.label} · <span className="text-gold">{fmtHeight(floor.height)}</span>
           </p>
           <input
@@ -175,18 +176,19 @@ export default function Views() {
             onChange={(e) => setFloorAndMode(PANO_FLOORS.length - 1 - Number(e.target.value), mode)}
             aria-label="Floor height"
             aria-valuetext={`${floor.label}, ${fmtHeight(floor.height)}`}
-            className="mt-3 h-8 w-full accent-[#d4a85a]"
+            className="mt-3 h-8 w-full accent-[#d4a85a] compact:mt-1 compact:h-7 land:mt-0 land:h-5"
           />
           <div className="flex justify-between text-[12px] text-ink/55">
             <span>Podium {fmtHeight(PANO_FLOORS.at(-1).height)}</span>
             <span>Terrace {fmtHeight(PANO_FLOORS[0].height)}</span>
           </div>
         </Chrome>
-        <div className="flex items-center justify-center gap-2 bg-panel px-4 pb-3">
+        <div className="flex items-center justify-center gap-2 px-3 pb-5 compact:pb-4 land:shrink-0 land:!pb-2 land:pt-2 land:pl-0">
           {!hidden && (
             <Segmented label="Lighting" options={MODE_OPTIONS} value={mode} onChange={(m) => setFloorAndMode(floorIndex, m)} size="sm" className="bg-white/5" />
           )}
-          <EyeToggle hidden={hidden} onToggle={() => setHidden((h) => !h)} />
+          <EyeToggle hidden={hidden} onToggle={() => setHidden((h) => !h)} className="shrink-0" />
+        </div>
         </div>
       </div>
     )

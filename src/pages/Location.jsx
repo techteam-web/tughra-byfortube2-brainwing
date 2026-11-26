@@ -5,7 +5,7 @@ import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { Car, Footprints, RotateCcw } from 'lucide-react'
 import { PLACE_CATEGORIES, TOWER, TRAVEL_MODES, estimateTrip, fetchRoute } from '../data/places'
 import { applyDarkStyle } from '../lib/mapStyle'
-import { prefersReducedMotion, useIsDesktop } from '../lib/hooks'
+import { prefersReducedMotion, useIsDesktop, useIsLandscapePhone, useIsRoomy, useMediaQuery } from '../lib/hooks'
 import { Segmented } from '../components/ui'
 import { MobileHeader } from '../components/MobileNav'
 
@@ -20,6 +20,11 @@ const MODE_OPTIONS = [
   { value: 'walk', label: 'Walking', Icon: Footprints },
 ]
 const ALL_PLACES = PLACE_CATEGORIES.flatMap((c) => c.places)
+const LIST_CLASS = {
+  column: 'scroll-thin flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto pr-1',
+  grid: 'grid min-h-0 grid-cols-2 content-start gap-1.5',
+  row: 'flex shrink-0 snap-x gap-2 overflow-x-auto [scrollbar-width:none]', // swipe sideways
+}
 
 const fmtTrip = (t) => `${t.minutes} min`
 const fmtKm = (t) => `${t.km.toFixed(1)} km`
@@ -33,6 +38,11 @@ function markerEl(className, html) {
 
 export default function Location() {
   const isDesktop = useIsDesktop()
+  const isLand = useIsLandscapePhone()
+  const isRoomy = useIsRoomy()
+  const isShortDesktop = useMediaQuery('(min-width: 1024px) and (max-height: 820px)')
+  // How the place list is laid out so the whole page fits on one screen.
+  const listLayout = isDesktop ? (isShortDesktop ? 'grid' : 'column') : isRoomy || isLand ? 'grid' : 'row'
   const [params, setParams] = useSearchParams()
   const linked = ALL_PLACES.find((p) => p.id === params.get('place'))
   const [categoryKey, setCategoryKey] = useState(linked ? linked.id.split(':')[0] : PLACE_CATEGORIES[0].key)
@@ -50,8 +60,11 @@ export default function Location() {
   const tripFor = useCallback((p) => trips[`${mode}:${p.id}`] ?? estimateTrip(p, mode), [trips, mode])
 
   const padding = useMemo(
-    () => (isDesktop ? { top: 120, bottom: 100, left: 420, right: 80 } : { top: 100, bottom: 30, left: 50, right: 50 }),
-    [isDesktop],
+    () =>
+      isDesktop
+        ? { top: 120, bottom: 100, left: isShortDesktop ? 520 : 420, right: 80 }
+        : { top: isLand ? 60 : 80, bottom: 30, left: 50, right: 50 },
+    [isDesktop, isLand, isShortDesktop],
   )
 
   // Map lifetime.
@@ -177,16 +190,16 @@ export default function Location() {
 
   const panel = (
     <>
-      <p className="eyebrow">Mumbai Central</p>
-      <h1 className="mt-1 font-display text-[22px] font-semibold">Nearby Landmarks</h1>
-      <div className="mt-4 flex flex-wrap gap-1.5">
+      <p className="eyebrow compact:hidden">Mumbai Central</p>
+      <h1 className="mt-1 font-display text-[22px] font-semibold compact:text-[18px] land:hidden">Nearby Landmarks</h1>
+      <div className="mt-4 flex shrink-0 flex-wrap gap-1.5 compact:mt-2 max-lg:flex-nowrap max-lg:overflow-x-auto max-lg:[scrollbar-width:none]">
         {PLACE_CATEGORIES.map((c) => (
           <button
             key={c.key}
             type="button"
             onClick={() => setCategoryKey(c.key)}
             aria-pressed={c.key === categoryKey}
-            className={`rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors ${
+            className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors ${
               c.key === categoryKey ? 'bg-gold text-[#1a130d]' : 'border border-white/12 text-ink/75 hover:text-ink'
             }`}
           >
@@ -194,31 +207,31 @@ export default function Location() {
           </button>
         ))}
       </div>
-      <Segmented label="Travel mode" options={MODE_OPTIONS} value={mode} onChange={setMode} size="sm" className="mt-3 bg-white/5" />
-      <ul className="scroll-thin mt-4 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto pr-1">
+      <Segmented label="Travel mode" options={MODE_OPTIONS} value={mode} onChange={setMode} size="sm" className="mt-3 shrink-0 self-start bg-white/5 compact:mt-2 land:mt-1.5" />
+      <ul className={`${LIST_CLASS[listLayout]} mt-4 compact:mt-2 land:mt-1.5`}>
         {category.places.map((p) => {
           const active = p.id === selectedId
           const trip = tripFor(p)
           return (
-            <li key={p.id}>
+            <li key={p.id} className={listLayout === 'row' ? 'w-[68%] shrink-0 snap-start phablet:w-[46%]' : 'min-w-0'}>
               <button
                 type="button"
                 onClick={() => choosePlace(p)}
                 aria-current={active ? 'true' : undefined}
-                className={`flex w-full items-center justify-between rounded-xl border px-3.5 py-2.5 text-left transition-colors ${
+                className={`flex h-full w-full items-center justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-left transition-colors compact:py-1.5 land:px-2.5 land:py-1.5 ${
                   active ? 'border-route/70 bg-route/10' : 'border-white/8 bg-white/[0.03] hover:bg-white/[0.06]'
                 }`}
               >
-                <span>
-                  <span className="block text-[13px] font-semibold">{p.name}</span>
-                  <span className={`block text-[12px] ${active ? 'text-route' : 'text-ink/50'}`}>{active ? 'Showing route' : p.note}</span>
+                <span className="min-w-0">
+                  <span className="block truncate text-[13px] font-semibold">{p.name}</span>
+                  <span className={`block truncate text-[12px] land:hidden ${active ? 'text-route' : 'text-ink/50'}`}>{active ? 'Showing route' : p.note}</span>
                 </span>
-                <span className="text-right">
+                <span className="shrink-0 text-right">
                   <span className={`block text-[13px] font-semibold ${active ? 'text-route' : ''}`}>
                     {trip.approx ? '~' : ''}
                     {fmtTrip(trip)}
                   </span>
-                  <span className="block text-[12px] text-ink/50">{fmtKm(trip)}</span>
+                  <span className="block text-[12px] text-ink/50 land:hidden">{fmtKm(trip)}</span>
                 </span>
               </button>
             </li>
@@ -230,13 +243,13 @@ export default function Location() {
 
   const selectedTrip = selected && tripFor(selected)
   const routeBar = (
-    <div className="glass flex items-center justify-between gap-3 rounded-full py-1.5 pl-4 pr-1.5 text-[12px]">
+    <div className="glass flex shrink-0 items-center justify-between gap-3 rounded-full py-1.5 pl-4 pr-1.5 text-[12px]">
       {selected ? (
-        <span className="text-route">
+        <span className="min-w-0 truncate text-route">
           {selected.name} · {fmtKm(selectedTrip)} · {fmtTrip(selectedTrip)} {TRAVEL_MODES[mode].short}
         </span>
       ) : (
-        <span className="text-ink/65">Pick a place to see the route</span>
+        <span className="min-w-0 truncate text-ink/65">Pick a place to see the route</span>
       )}
       <button type="button" onClick={resetMap} className="btn-outline h-8 shrink-0 whitespace-nowrap px-3.5 text-[12px]">
         <RotateCcw size={13} /> Reset Map
@@ -246,14 +259,15 @@ export default function Location() {
 
   if (!isDesktop) {
     return (
-      <div className="absolute inset-0 flex flex-col pb-[calc(4rem+env(safe-area-inset-bottom))]">
-        <MobileHeader />
-        <div className="relative h-[42%] shrink-0">
+      <div className="absolute inset-0 flex flex-col pb-[var(--nav-h)] land:flex-row">
+        {/* On a sideways phone the header sits over the map only. */}
+        <MobileHeader className="land:right-[58%]" />
+        <div className="relative min-h-0 flex-1">
           <div ref={containerRef} className="absolute inset-0" />
         </div>
-        <div className="solid-panel -mt-3 flex min-h-0 flex-1 flex-col rounded-t-2xl border-b-0 px-4 pb-3 pt-4">
+        <div className="solid-panel relative -mt-3 flex shrink-0 flex-col rounded-t-2xl border-b-0 px-4 pb-3 pt-3 md:px-6 md:pb-4 md:pt-4 compact:pb-2 compact:pt-2 land:mt-0 land:w-[58%] land:justify-center land:rounded-none land:px-3 land:py-1.5">
           {routeBar}
-          <div className="mt-3 flex min-h-0 flex-1 flex-col">{panel}</div>
+          <div className="mt-3 flex flex-col compact:mt-2 land:mt-1.5">{panel}</div>
         </div>
       </div>
     )
@@ -262,7 +276,9 @@ export default function Location() {
   return (
     <div className="absolute inset-0">
       <div ref={containerRef} className="absolute inset-0" />
-      <aside className="glass absolute bottom-6 left-6 top-[88px] flex w-[340px] flex-col rounded-2xl p-5">{panel}</aside>
+      <aside className={`glass absolute bottom-6 left-6 top-[88px] flex flex-col rounded-2xl p-5 compact:bottom-4 compact:p-4 ${isShortDesktop ? 'w-[440px]' : 'w-[340px]'}`}>
+        {panel}
+      </aside>
       <div className="absolute bottom-6 right-16">{routeBar}</div>
     </div>
   )

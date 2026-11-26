@@ -42,7 +42,7 @@ export default function App() {
   )
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-bg">
+    <div className="fixed inset-0 overflow-hidden bg-bg">
       {isDesktop && <TopBar />}
       <main ref={stage} className="absolute inset-0">
         <Suspense fallback={<div className="h-full w-full bg-bg" />}>

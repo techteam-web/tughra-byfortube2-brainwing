@@ -15,10 +15,11 @@ const emailValid = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim())
 const nameValid = (v) => v.trim().length >= 2
 
 const VALIDATORS = { name: nameValid, phone: phoneValid, email: emailValid }
+// Kept short: each error sits on the label's line, so it never adds height.
 const ERRORS = {
-  name: 'Please enter your full name.',
-  phone: 'Enter a valid 10-digit mobile number.',
-  email: 'Enter a valid email address.',
+  name: 'Enter your name',
+  phone: '10-digit number',
+  email: 'Invalid email',
 }
 
 export default function BookVisit() {
@@ -70,11 +71,18 @@ export default function BookVisit() {
   const field = (key, label, props) => {
     const st = fieldState(key)
     return (
-      <label className="block">
-        <span className="text-[12px] font-semibold uppercase tracking-[0.12em] text-ink/70">
-          {label} <span className="text-gold">*</span>
+      <label className="block min-w-0">
+        <span className="flex items-baseline justify-between gap-2">
+          <span className="truncate text-[12px] font-semibold uppercase tracking-[0.12em] text-ink/70">
+            {label} <span className="text-gold">*</span>
+          </span>
+          {st === 'bad' && (
+            <span id={`${key}-err`} className="shrink-0 text-[12px] text-bad">
+              {ERRORS[key]}
+            </span>
+          )}
         </span>
-        <span className="relative mt-1.5 block">
+        <span className="relative mt-1.5 block compact:mt-1 land:mt-0.5">
           <input
             {...props}
             value={form[key]}
@@ -82,35 +90,33 @@ export default function BookVisit() {
             onBlur={() => setTouched((t) => ({ ...t, [key]: true }))}
             aria-invalid={st === 'bad'}
             aria-describedby={st === 'bad' ? `${key}-err` : undefined}
-            className={`h-11 w-full rounded-lg border bg-white/[0.04] px-3.5 pr-10 text-[14px] text-ink outline-none transition-colors placeholder:text-ink/35 focus:bg-white/[0.07] ${
+            className={`h-11 w-full rounded-lg border bg-white/[0.04] px-3.5 pr-10 text-[14px] compact:h-9 land:h-8 text-ink outline-none transition-colors placeholder:text-ink/35 focus:bg-white/[0.07] ${
               st === 'bad' ? 'border-bad' : st === 'ok' ? 'border-ok/70' : 'border-white/12 focus:border-gold/70'
             }`}
           />
           {st === 'ok' && <Check size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-ok" />}
           {st === 'bad' && <CircleAlert size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-bad" />}
         </span>
-        {st === 'bad' && (
-          <span id={`${key}-err`} className="mt-1 block text-[12px] text-bad">
-            {ERRORS[key]}
-          </span>
-        )}
       </label>
     )
   }
 
   const formEl = (
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
-      <div>
-        <p className="eyebrow">Private Consultation</p>
-        <h1 className="mt-1.5 font-display text-[26px] font-semibold lg:text-[30px]">Book a Private Viewing</h1>
-        <p className="mt-1 text-[14px] text-ink/65">Share your details and our advisory team will confirm your visit.</p>
+    <form onSubmit={onSubmit} noValidate className="relative flex flex-col gap-4 compact:gap-2.5 land:grid land:grid-cols-2 land:gap-x-5 land:gap-y-2">
+      <div className="land:col-span-2">
+        <p className="eyebrow compact:hidden">Private Consultation</p>
+        <h1 className="mt-1.5 font-display text-[22px] font-semibold xs:text-[26px] lg:text-[30px] compact:mt-0 compact:text-[20px] land:text-[18px]">Book a Private Viewing</h1>
+        <p className="mt-1 text-[14px] text-ink/65 compact:hidden">Share your details and our advisory team will confirm your visit.</p>
       </div>
+      <div className="flex flex-col gap-4 compact:gap-2.5 land:gap-2">
       {field('name', 'Full Name', { type: 'text', autoComplete: 'name', placeholder: 'Your full name' })}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 compact:gap-2.5 md:grid-cols-2 land:grid-cols-1 land:gap-2">
         {field('phone', 'Mobile Number', { type: 'tel', inputMode: 'tel', autoComplete: 'tel', placeholder: '+91 98XXX XXXXX' })}
         {field('email', 'Email Address', { type: 'email', autoComplete: 'email', placeholder: 'you@example.com' })}
       </div>
+      </div>
 
+      <div className="flex flex-col gap-4 compact:gap-2.5 land:justify-between land:gap-2">
       <fieldset>
         <legend className="text-[12px] font-semibold uppercase tracking-[0.12em] text-ink/70">Preferred Residence</legend>
         <div className="mt-1.5 grid grid-cols-2 gap-3">
@@ -122,11 +128,11 @@ export default function BookVisit() {
                 type="button"
                 aria-pressed={active}
                 onClick={() => setHome(active ? null : r.id)}
-                className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+                className={`rounded-xl border px-4 py-3 text-left transition-colors compact:px-3 compact:py-1.5 land:py-1 ${
                   active ? 'border-gold bg-gold/10' : 'border-white/12 bg-white/[0.03] hover:border-white/30'
                 }`}
               >
-                <span className="block font-display text-[16px] font-semibold">{r.title}</span>
+                <span className="block font-display text-[16px] font-semibold compact:text-[14px]">{r.title}</span>
                 <span className={`block text-[12px] ${active ? 'text-gold' : 'text-ink/55'}`}>
                   {r.carpetArea.toLocaleString('en-IN')} sq.ft{isDesktop ? ` · ${r.tag}` : ''}
                 </span>
@@ -145,7 +151,7 @@ export default function BookVisit() {
               type="button"
               aria-pressed={time === t}
               onClick={() => setTime(time === t ? null : t)}
-              className={`rounded-full px-4 py-2 text-[13px] font-medium transition-colors ${
+              className={`rounded-full px-4 py-2 text-[13px] font-medium transition-colors compact:py-1.5 land:py-1 ${
                 time === t ? 'bg-gold text-[#1a130d]' : 'border border-white/12 text-ink/75 hover:text-ink'
               }`}
             >
@@ -155,7 +161,7 @@ export default function BookVisit() {
         </div>
       </fieldset>
 
-      <button type="submit" disabled={status.state === 'sending' || status.state === 'sent'} className="btn-gold mt-2 h-12 w-full text-[15px]">
+      <button type="submit" disabled={status.state === 'sending' || status.state === 'sent'} className="btn-gold mt-2 h-12 w-full shrink-0 text-[15px] compact:mt-0 compact:h-10 land:h-9 land:text-[14px]">
         {status.state === 'sending' ? (
           <>
             <Loader2 size={16} className="animate-spin" /> Sending…
@@ -171,15 +177,18 @@ export default function BookVisit() {
         )}
       </button>
 
-      <div aria-live="polite">
+      </div>
+
+      {/* Floats over the form so a message never pushes the page taller. */}
+      <div aria-live="polite" className="absolute inset-x-0 bottom-14 z-10 compact:bottom-12 land:bottom-11">
         {status.state === 'sent' && (
-          <p className="flex items-start gap-2 rounded-lg border border-ok/50 bg-ok/10 px-4 py-3 text-[13px] text-ok">
+          <p className="flex items-start gap-2 rounded-lg border border-ok/50 bg-[#17251e] px-4 py-3 text-[13px] text-ok">
             <CircleCheck size={16} className="mt-0.5 shrink-0" />
             Thank you, {form.name.trim().split(' ')[0]}. Your request is in — our advisory team will call you to confirm your visit.
           </p>
         )}
         {status.state === 'error' && (
-          <p className="flex items-start gap-2 rounded-lg border border-bad/50 bg-bad/10 px-4 py-3 text-[13px] text-bad">
+          <p className="flex items-start gap-2 rounded-lg border border-bad/50 bg-[#2a1816] px-4 py-3 text-[13px] text-bad">
             <CircleAlert size={16} className="mt-0.5 shrink-0" />
             {status.message}
           </p>
@@ -213,9 +222,9 @@ export default function BookVisit() {
 
   if (!isDesktop) {
     return (
-      <div className="absolute inset-0 overflow-y-auto px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))]">
-        {formEl}
-        <p className="mt-6 text-center text-[12px] text-ink/50">
+      <div className="absolute inset-x-0 bottom-[var(--nav-h)] top-0 flex flex-col justify-center overflow-hidden px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] md:px-8">
+        <div className="mx-auto w-full max-w-[560px] land:max-w-[760px]">{formEl}</div>
+        <p className="mt-6 text-center text-[12px] text-ink/50 [@media(max-height:760px)]:hidden">
           {SALES_LOUNGE.name} · {SALES_LOUNGE.hours}
         </p>
       </div>
@@ -225,8 +234,8 @@ export default function BookVisit() {
   return (
     <div className="absolute inset-x-4 bottom-4 top-[88px] grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-4">
       {photo}
-      <div className="solid-panel scroll-thin overflow-y-auto rounded-2xl">
-        <div className="mx-auto flex min-h-full max-w-[560px] flex-col justify-center px-8 py-8">{formEl}</div>
+      <div className="solid-panel overflow-hidden rounded-2xl">
+        <div className="mx-auto flex h-full max-w-[560px] flex-col justify-center px-8 py-8 compact:py-3">{formEl}</div>
       </div>
     </div>
   )

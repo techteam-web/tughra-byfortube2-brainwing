@@ -19,18 +19,36 @@
   --font-sans: "Inter Variable", "Inter", system-ui, sans-serif;
 
   --ease-silk: cubic-bezier(0.33, 1, 0.68, 1);
+
+  /* Device widths: base = compact phones (320-389px), then: */
+  --breakpoint-xs: 24.375rem; /* 390px: standard and flagship phones */
+  --breakpoint-phablet: 30rem; /* 480px: phablets and landscape phones */
+  /* md (768px) = unfolded foldables and tablets */
 }
+
+/* Pages never scroll, so layouts also adapt to the screen's height. */
+@custom-variant compact (@media (max-height: 700px));
+@custom-variant land (@media (orientation: landscape) and (max-height: 500px));
 
 :root {
   color-scheme: dark;
   --line: rgb(245 240 232 / 0.1);
   --glass: rgb(22 17 14 / 0.72);
+  /* Height of the phone layout's bottom bar. */
+  --nav-h: calc(4rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  :root {
+    --nav-h: calc(3rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 html,
 body,
 #root {
   height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -148,6 +166,15 @@ button {
   mask-image: linear-gradient(to right, transparent 0%, #000 16%, #000 84%, transparent 100%),
     linear-gradient(to bottom, #000 62%, transparent 96%);
   mask-composite: intersect;
+}
+
+@media (max-width: 1023px) {
+  .tower-fade {
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 10%, #000 90%, transparent 100%),
+      linear-gradient(to bottom, #000 92%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 10%, #000 90%, transparent 100%),
+      linear-gradient(to bottom, #000 92%, transparent 100%);
+  }
 }
 
 /* Marzipano hotspots must not catch drags except on the tag itself. */

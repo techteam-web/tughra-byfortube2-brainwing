@@ -24,7 +24,7 @@ export default function MobileNav() {
   useEffect(() => setOpen(false), [pathname])
 
   const tabClass = (active) =>
-    `flex flex-1 flex-col items-center justify-center gap-1 text-[12px] font-medium ${active ? 'text-gold' : 'text-ink/65'}`
+    `flex flex-1 flex-col items-center justify-center gap-1 text-[12px] font-medium land:flex-row land:gap-2 ${active ? 'text-gold' : 'text-ink/65'}`
 
   return (
     <>
@@ -33,7 +33,7 @@ export default function MobileNav() {
           <div
             role="dialog"
             aria-label="Menu"
-            className="solid-panel absolute inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] rounded-2xl p-2"
+            className="solid-panel absolute inset-x-3 bottom-[calc(var(--nav-h)+0.5rem)] rounded-2xl p-2 phablet:left-auto phablet:w-72"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-3 py-2">
@@ -47,7 +47,7 @@ export default function MobileNav() {
                 key={to}
                 to={to}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-xl px-3 py-3 text-[15px] ${isActive ? 'bg-gold/10 text-gold' : 'text-ink'}`
+                  `flex items-center gap-3 rounded-xl px-3 py-3 text-[15px] land:py-2.5 ${isActive ? 'bg-gold/10 text-gold' : 'text-ink'}`
                 }
               >
                 <Icon size={18} strokeWidth={1.7} />
@@ -59,7 +59,7 @@ export default function MobileNav() {
       )}
       <nav
         aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-[61] flex h-[calc(4rem+env(safe-area-inset-bottom))] border-t border-white/10 bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
+        className="fixed inset-x-0 bottom-0 z-[61] flex h-[var(--nav-h)] border-t border-white/10 bg-bg/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
       >
         {TABS.map(({ to, label, Icon, end }) => (
           <NavLink key={to} to={to} end={end} className={({ isActive }) => tabClass(isActive && !open)}>
@@ -77,9 +77,9 @@ export default function MobileNav() {
 }
 
 /** Small header for phone pages: Tughra badge left, Book Visit right. */
-export function MobileHeader({ children }) {
+export function MobileHeader({ children, className = '' }) {
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-0 z-40 flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
+    <div className={`pointer-events-none fixed inset-x-0 top-0 z-40 flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))] land:pt-[max(0.5rem,env(safe-area-inset-top))] ${className}`}>
       <Link to="/" className="glass pointer-events-auto flex items-center gap-2 rounded-full py-1.5 pl-2 pr-3" aria-label="Tughra Royale — Home">
         <img src="/media/tughra-mark-gold.png" alt="" className="h-6 w-auto" />
         <span className="font-display text-[12px] font-semibold tracking-[0.14em]">TUGHRA</span>
