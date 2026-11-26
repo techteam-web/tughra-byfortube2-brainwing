@@ -13,7 +13,8 @@ import { MobileHeader } from '../components/MobileNav'
 setWorkerUrl(mapWorkerUrl)
 
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty'
-const HOME_VIEW = { center: TOWER.at, zoom: 14.4, pitch: 50, bearing: -20 }
+// Close and tilted enough to see the 3D tower on its plot.
+const HOME_VIEW = { center: TOWER.at, zoom: 16.3, pitch: 62, bearing: -20 }
 const EMPTY = { type: 'FeatureCollection', features: [] }
 const MODE_OPTIONS = [
   { value: 'drive', label: 'By Car', Icon: Car },
@@ -28,6 +29,9 @@ const LIST_CLASS = {
 
 const fmtTrip = (t) => `${t.minutes} min`
 const fmtKm = (t) => `${t.km.toFixed(1)} km`
+
+/** Small maps (phones) start a little further out so the whole tower fits. */
+const homeView = () => (window.innerWidth < 1024 ? { ...HOME_VIEW, zoom: window.innerHeight < 640 ? 15.6 : 15.9 } : HOME_VIEW)
 
 function markerEl(className, html) {
   const el = document.createElement('div')
@@ -99,18 +103,26 @@ export default function Location() {
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': '#4d9bff', 'line-width': 3.5 },
       })
-      map.easeTo({ ...HOME_VIEW, duration: prefersReducedMotion() ? 0 : 2600 })
+      map.easeTo({ ...homeView(), duration: prefersReducedMotion() ? 0 : 2600 })
       setMapReady(true)
+
+      // The 3D tower. Its code and model load after the map, so the map is never held up.
+      import('../lib/buildingLayer')
+        .then(({ createBuildingLayer, clearBuildingPlot }) => {
+          if (mapRef.current !== map) return // the page was left while loading
+          map.addLayer(createBuildingLayer(TOWER.at, { onLoad: () => clearBuildingPlot(map, TOWER.at) }))
+        })
+        .catch((error) => console.warn('The 3D building could not be loaded.', error))
     })
 
     new Marker({
       element: markerEl(
-        'flex items-center gap-2',
-        `<span class="block h-4 w-4 rounded-full border-2 border-[#16110e] bg-[#d4a85a] shadow-[0_0_0_5px_rgb(212_168_90/0.3)]"></span>
+        'flex flex-col items-center gap-2',
+        `<span class="block h-3 w-3 rounded-full border-2 border-[#16110e] bg-[#d4a85a] shadow-[0_0_0_4px_rgb(212_168_90/0.3)]"></span>
          <span class="rounded-md bg-[#d4a85a] px-2.5 py-1 text-[12px] font-semibold text-[#1a130d] whitespace-nowrap">${TOWER.name} · ${TOWER.area}</span>`,
       ),
-      anchor: 'left',
-      offset: [-8, 0],
+      anchor: 'top',
+      offset: [0, 26], // clear of the tower's footprint
     })
       .setLngLat(TOWER.at)
       .addTo(map)
@@ -142,8 +154,9 @@ export default function Location() {
   // Draw the selected route.
   useEffect(() => {
     const map = mapRef.current
-    if (!map || !mapReady) return
-    const source = map.getSource('route')
+    // After a layout switch the map is rebuilt: wait until the new one has its route layer.
+    const source = mapReady ? map?.getSource('route') : null
+    if (!source) return
     destMarkerRef.current?.remove()
     destMarkerRef.current = null
     if (!selected) {
@@ -185,7 +198,7 @@ export default function Location() {
   const resetMap = () => {
     setSelectedId(null)
     setParams({}, { replace: true })
-    mapRef.current?.flyTo({ ...HOME_VIEW, duration: prefersReducedMotion() ? 0 : 1400 })
+    mapRef.current?.flyTo({ ...homeView(), duration: prefersReducedMotion() ? 0 : 1400 })
   }
 
   const panel = (
