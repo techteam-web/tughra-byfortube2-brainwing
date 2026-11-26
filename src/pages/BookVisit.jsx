@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ArrowRight, Check, CircleCheck, CircleAlert, Loader2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, CircleCheck, CircleAlert, Loader2 } from 'lucide-react'
 import { RESIDENCES } from '../data/residences'
 import { BOOK_VISIT_PHOTO } from '../data/media'
 import { LEAD_ENDPOINT, SALES_LOUNGE } from '../data/site'
-import { useIsDesktop } from '../lib/hooks'
+import { useIsDesktop, useIsRoomy } from '../lib/hooks'
 
 const TIMES = ['Morning', 'Afternoon', 'Evening']
 
@@ -24,6 +24,10 @@ const ERRORS = {
 
 export default function BookVisit() {
   const isDesktop = useIsDesktop()
+  // Phones show the form as two short steps so it never feels crowded; tablets and desktops show it whole.
+  const roomy = useIsRoomy()
+  const stepped = !isDesktop && !roomy
+  const [step, setStep] = useState(1)
   const [params] = useSearchParams()
   const [form, setForm] = useState({ name: '', phone: '', email: '' })
   const [touched, setTouched] = useState({})
@@ -38,6 +42,10 @@ export default function BookVisit() {
     e.preventDefault()
     setTouched({ name: true, phone: true, email: true })
     if (!allValid || status.state === 'sending') return
+    if (stepped && step === 1) {
+      setStep(2)
+      return
+    }
     if (!LEAD_ENDPOINT) {
       setStatus({
         state: 'error',
@@ -82,7 +90,7 @@ export default function BookVisit() {
             </span>
           )}
         </span>
-        <span className="relative mt-1.5 block compact:mt-1 land:mt-0.5">
+        <span className={`relative block ${stepped ? 'mt-2 land:mt-1' : 'mt-1.5 compact:mt-1'}`}>
           <input
             {...props}
             value={form[key]}
@@ -90,7 +98,7 @@ export default function BookVisit() {
             onBlur={() => setTouched((t) => ({ ...t, [key]: true }))}
             aria-invalid={st === 'bad'}
             aria-describedby={st === 'bad' ? `${key}-err` : undefined}
-            className={`h-11 w-full rounded-lg border bg-white/[0.04] px-3.5 pr-10 text-[14px] compact:h-9 land:h-8 text-ink outline-none transition-colors placeholder:text-ink/35 focus:bg-white/[0.07] ${
+            className={`w-full rounded-lg border bg-white/[0.04] px-3.5 pr-10 text-ink ${stepped ? 'h-12 text-[16px] land:h-10' : 'h-11 text-[14px] compact:h-9'} outline-none transition-colors placeholder:text-ink/35 focus:bg-white/[0.07] ${
               st === 'bad' ? 'border-bad' : st === 'ok' ? 'border-ok/70' : 'border-white/12 focus:border-gold/70'
             }`}
           />
@@ -101,99 +109,160 @@ export default function BookVisit() {
     )
   }
 
-  const formEl = (
-    <form onSubmit={onSubmit} noValidate className="relative flex flex-col gap-4 compact:gap-2.5 land:grid land:grid-cols-2 land:gap-x-5 land:gap-y-2">
-      <div className="land:col-span-2">
-        <p className="eyebrow compact:hidden">Private Consultation</p>
-        <h1 className="mt-1.5 font-display text-[22px] font-semibold xs:text-[26px] lg:text-[30px] compact:mt-0 compact:text-[20px] land:text-[18px]">Book a Private Viewing</h1>
-        <p className="mt-1 text-[14px] text-ink/65 compact:hidden">Share your details and our advisory team will confirm your visit.</p>
-      </div>
-      <div className="flex flex-col gap-4 compact:gap-2.5 land:gap-2">
-      {field('name', 'Full Name', { type: 'text', autoComplete: 'name', placeholder: 'Your full name' })}
-      <div className="grid gap-4 compact:gap-2.5 md:grid-cols-2 land:grid-cols-1 land:gap-2">
-        {field('phone', 'Mobile Number', { type: 'tel', inputMode: 'tel', autoComplete: 'tel', placeholder: '+91 98XXX XXXXX' })}
-        {field('email', 'Email Address', { type: 'email', autoComplete: 'email', placeholder: 'you@example.com' })}
-      </div>
-      </div>
+  const nameField = field('name', 'Full Name', { type: 'text', autoComplete: 'name', placeholder: 'Your full name' })
+  const phoneField = field('phone', 'Mobile Number', { type: 'tel', inputMode: 'tel', autoComplete: 'tel', placeholder: '+91 98XXX XXXXX' })
+  const emailField = field('email', 'Email Address', { type: 'email', autoComplete: 'email', placeholder: 'you@example.com' })
 
-      <div className="flex flex-col gap-4 compact:gap-2.5 land:justify-between land:gap-2">
-      <fieldset>
-        <legend className="text-[12px] font-semibold uppercase tracking-[0.12em] text-ink/70">Preferred Residence</legend>
-        <div className="mt-1.5 grid grid-cols-2 gap-3">
-          {RESIDENCES.map((r) => {
-            const active = home === r.id
-            return (
-              <button
-                key={r.id}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setHome(active ? null : r.id)}
-                className={`rounded-xl border px-4 py-3 text-left transition-colors compact:px-3 compact:py-1.5 land:py-1 ${
-                  active ? 'border-gold bg-gold/10' : 'border-white/12 bg-white/[0.03] hover:border-white/30'
-                }`}
-              >
-                <span className="block font-display text-[16px] font-semibold compact:text-[14px]">{r.title}</span>
-                <span className={`block text-[12px] ${active ? 'text-gold' : 'text-ink/55'}`}>
-                  {r.carpetArea.toLocaleString('en-IN')} sq.ft{isDesktop ? ` · ${r.tag}` : ''}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      </fieldset>
+  const legend = 'text-[12px] font-semibold uppercase tracking-[0.12em] text-ink/70'
 
-      <fieldset>
-        <legend className="text-[12px] font-semibold uppercase tracking-[0.12em] text-ink/70">Preferred Visit Time</legend>
-        <div className="mt-1.5 flex flex-wrap gap-2">
-          {TIMES.map((t) => (
+  const residenceField = (
+    <fieldset>
+      <legend className={legend}>Preferred Residence</legend>
+      <div className={`grid grid-cols-2 gap-3 ${stepped ? 'mt-3 land:mt-2' : 'mt-1.5'}`}>
+        {RESIDENCES.map((r) => {
+          const active = home === r.id
+          return (
             <button
-              key={t}
+              key={r.id}
               type="button"
-              aria-pressed={time === t}
-              onClick={() => setTime(time === t ? null : t)}
-              className={`rounded-full px-4 py-2 text-[13px] font-medium transition-colors compact:py-1.5 land:py-1 ${
-                time === t ? 'bg-gold text-[#1a130d]' : 'border border-white/12 text-ink/75 hover:text-ink'
+              aria-pressed={active}
+              onClick={() => setHome(active ? null : r.id)}
+              className={`rounded-xl border text-left transition-colors ${stepped ? 'px-4 py-4 land:py-2' : 'px-4 py-3 compact:px-3 compact:py-1.5'} ${
+                active ? 'border-gold bg-gold/10' : 'border-white/12 bg-white/[0.03] hover:border-white/30'
               }`}
             >
-              {t}
+              <span className="block font-display text-[16px] font-semibold compact:text-[15px]">{r.title}</span>
+              <span className={`mt-0.5 block text-[12px] ${active ? 'text-gold' : 'text-ink/55'}`}>
+                {r.carpetArea.toLocaleString('en-IN')} sq.ft{isDesktop ? ` · ${r.tag}` : ''}
+              </span>
             </button>
-          ))}
+          )
+        })}
+      </div>
+    </fieldset>
+  )
+
+  const timeField = (
+    <fieldset>
+      <legend className={legend}>Preferred Visit Time</legend>
+      <div className={stepped ? 'mt-3 grid grid-cols-3 gap-2 land:mt-2' : 'mt-1.5 flex flex-wrap gap-2'}>
+        {TIMES.map((t) => (
+          <button
+            key={t}
+            type="button"
+            aria-pressed={time === t}
+            onClick={() => setTime(time === t ? null : t)}
+            className={`rounded-full text-[13px] font-medium transition-colors ${stepped ? 'py-3 land:py-2' : 'px-4 py-2 compact:py-1.5'} ${
+              time === t ? 'bg-gold text-[#1a130d]' : 'border border-white/12 text-ink/75 hover:text-ink'
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  )
+
+  const submit = (
+    <button
+      type="submit"
+      disabled={status.state === 'sending' || status.state === 'sent'}
+      className={`btn-gold text-[15px] ${stepped ? 'h-12 min-w-0 flex-1 land:h-10' : 'mt-2 h-12 w-full shrink-0 compact:mt-0 compact:h-10'}`}
+    >
+      {status.state === 'sending' ? (
+        <>
+          <Loader2 size={16} className="animate-spin" /> Sending…
+        </>
+      ) : status.state === 'sent' ? (
+        <>
+          <Check size={16} /> Request Sent
+        </>
+      ) : (
+        <>
+          {stepped ? 'Confirm Viewing' : 'Confirm Private Viewing'} <ArrowRight size={16} />
+        </>
+      )}
+    </button>
+  )
+
+  const statusNote = (
+    <div aria-live="polite" className={`absolute inset-x-0 z-10 ${stepped ? 'bottom-14 land:bottom-12' : 'bottom-14 compact:bottom-12'}`}>
+      {status.state === 'sent' && (
+        <p className="flex items-start gap-2 rounded-lg border border-ok/50 bg-[#17251e] px-4 py-3 text-[13px] text-ok">
+          <CircleCheck size={16} className="mt-0.5 shrink-0" />
+          Thank you, {form.name.trim().split(' ')[0]}. Your request is in — our advisory team will call you to confirm your visit.
+        </p>
+      )}
+      {status.state === 'error' && (
+        <p className="flex items-start gap-2 rounded-lg border border-bad/50 bg-[#2a1816] px-4 py-3 text-[13px] text-bad">
+          <CircleAlert size={16} className="mt-0.5 shrink-0" />
+          {status.message}
+        </p>
+      )}
+    </div>
+  )
+
+  const formEl = stepped ? (
+    <form onSubmit={onSubmit} noValidate className="relative flex flex-col">
+      <div>
+        <div className="flex items-center gap-3">
+          <p className="eyebrow">Step {step} of 2</p>
+          <span className="flex flex-1 gap-1.5" aria-hidden="true">
+            <span className="h-[3px] flex-1 rounded-full bg-gold" />
+            <span className={`h-[3px] flex-1 rounded-full transition-colors ${step === 2 ? 'bg-gold' : 'bg-white/12'}`} />
+          </span>
         </div>
-      </fieldset>
-
-      <button type="submit" disabled={status.state === 'sending' || status.state === 'sent'} className="btn-gold mt-2 h-12 w-full shrink-0 text-[15px] compact:mt-0 compact:h-10 land:h-9 land:text-[14px]">
-        {status.state === 'sending' ? (
-          <>
-            <Loader2 size={16} className="animate-spin" /> Sending…
-          </>
-        ) : status.state === 'sent' ? (
-          <>
-            <Check size={16} /> Request Sent
-          </>
-        ) : (
-          <>
-            Confirm Private Viewing <ArrowRight size={16} />
-          </>
-        )}
-      </button>
-
+        <h1 className="mt-3 font-display text-[24px] font-semibold leading-tight xs:text-[28px] land:mt-1.5 land:text-[20px]">
+          {step === 1 ? 'Book a Private Viewing' : 'Choose Your Visit'}
+        </h1>
+        <p className="mt-2 text-[14px] text-ink/65 land:hidden">
+          {step === 1 ? 'Tell us how to reach you.' : 'Both choices are optional.'}
+        </p>
       </div>
 
-      {/* Floats over the form so a message never pushes the page taller. */}
-      <div aria-live="polite" className="absolute inset-x-0 bottom-14 z-10 compact:bottom-12 land:bottom-11">
-        {status.state === 'sent' && (
-          <p className="flex items-start gap-2 rounded-lg border border-ok/50 bg-[#17251e] px-4 py-3 text-[13px] text-ok">
-            <CircleCheck size={16} className="mt-0.5 shrink-0" />
-            Thank you, {form.name.trim().split(' ')[0]}. Your request is in — our advisory team will call you to confirm your visit.
-          </p>
-        )}
-        {status.state === 'error' && (
-          <p className="flex items-start gap-2 rounded-lg border border-bad/50 bg-[#2a1816] px-4 py-3 text-[13px] text-bad">
-            <CircleAlert size={16} className="mt-0.5 shrink-0" />
-            {status.message}
-          </p>
-        )}
+      {step === 1 ? (
+        <>
+          <div className="mt-7 flex flex-col gap-5 compact:mt-5 compact:gap-3.5 land:mt-3 land:grid land:grid-cols-2 land:gap-x-4 land:gap-y-3">
+            <div className="land:col-span-2">{nameField}</div>
+            {phoneField}
+            {emailField}
+          </div>
+          <button type="submit" className="btn-gold mt-7 h-12 w-full text-[15px] compact:mt-5 land:mt-4 land:h-10">
+            Continue <ArrowRight size={16} />
+          </button>
+        </>
+      ) : (
+        <>
+          <div className="mt-7 flex flex-col gap-7 compact:mt-5 compact:gap-5 land:mt-3 land:grid land:grid-cols-2 land:gap-4">
+            {residenceField}
+            {timeField}
+          </div>
+          <div className="relative mt-8 flex gap-3 compact:mt-6 land:mt-5">
+            <button type="button" onClick={() => setStep(1)} className="btn-outline h-12 shrink-0 px-4 text-[14px] land:h-10">
+              <ArrowLeft size={16} /> Back
+            </button>
+            {submit}
+          </div>
+          {statusNote}
+        </>
+      )}
+    </form>
+  ) : (
+    <form onSubmit={onSubmit} noValidate className="relative flex flex-col gap-4 compact:gap-2.5">
+      <div>
+        <p className="eyebrow compact:hidden">Private Consultation</p>
+        <h1 className="mt-1.5 font-display text-[26px] font-semibold lg:text-[30px] compact:mt-0 compact:text-[20px]">Book a Private Viewing</h1>
+        <p className="mt-1 text-[14px] text-ink/65 compact:hidden">Share your details and our advisory team will confirm your visit.</p>
       </div>
+      {nameField}
+      <div className="grid gap-4 compact:gap-2.5 md:grid-cols-2">
+        {phoneField}
+        {emailField}
+      </div>
+      {residenceField}
+      {timeField}
+      {submit}
+      {statusNote}
     </form>
   )
 
@@ -222,8 +291,8 @@ export default function BookVisit() {
 
   if (!isDesktop) {
     return (
-      <div className="absolute inset-x-0 bottom-[var(--nav-h)] top-0 flex flex-col justify-center overflow-hidden px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] md:px-8">
-        <div className="mx-auto w-full max-w-[560px] land:max-w-[760px]">{formEl}</div>
+      <div className="absolute inset-x-0 bottom-[var(--nav-h)] top-0 flex flex-col justify-center overflow-hidden px-4 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))] xs:px-6 md:px-8">
+        <div className="mx-auto w-full max-w-[480px] md:max-w-[560px] land:max-w-[640px]">{formEl}</div>
         <p className="mt-6 text-center text-[12px] text-ink/50 [@media(max-height:760px)]:hidden">
           {SALES_LOUNGE.name} · {SALES_LOUNGE.hours}
         </p>

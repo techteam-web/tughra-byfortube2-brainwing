@@ -2,6 +2,23 @@ import { useCallback, useEffect, useState } from 'react'
 
 const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement || null
 
+/** Ask for browser fullscreen. Must run inside a click or tap. Resolves false where unsupported (iPhone Safari). */
+export async function enterFullscreen() {
+  const root = document.documentElement
+  const request = root.requestFullscreen || root.webkitRequestFullscreen
+  if (!request || fsElement()) return false
+  try {
+    await request.call(root)
+    return true
+  } catch {
+    return false
+  }
+}
+
+export function exitFullscreen() {
+  if (fsElement()) (document.exitFullscreen || document.webkitExitFullscreen).call(document)?.catch?.(() => {})
+}
+
 /** Fullscreen state plus a safe toggle. `supported` is false on iPhone Safari. */
 export function useFullscreen() {
   const root = typeof document !== 'undefined' ? document.documentElement : null

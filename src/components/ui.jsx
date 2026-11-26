@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, Eye, EyeOff, Hand, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Eye, EyeOff, Hand, RotateCw, X } from 'lucide-react'
+import { useMediaQuery } from '../lib/hooks'
 
 /** Pill switch; the active option is gold. */
 export function Segmented({ options, value, onChange, size = 'md', className = '', label }) {
@@ -62,7 +63,12 @@ export function DragHint({ visible, children = 'Drag anywhere to look around 360
 
 /** Full-screen photo viewer with arrows, keyboard and swipe. */
 export function Lightbox({ images, index, onClose, onIndex }) {
-  const [touchX, setTouchX] = useState(null)
+  const [touch, setTouch] = useState(null)
+  // An upright phone can turn a wide photo sideways so it fills the whole screen.
+  const portrait = useMediaQuery('(orientation: portrait) and (max-width: 1023px)')
+  const [turned, setTurned] = useState(false)
+  const [wide, setWide] = useState(false)
+  const rotated = turned && portrait && wide
   const go = useCallback((d) => onIndex((index + d + images.length) % images.length), [index, images.length, onIndex])
 
   useEffect(() => {
@@ -81,30 +87,46 @@ export function Lightbox({ images, index, onClose, onIndex }) {
       role="dialog"
       aria-modal="true"
       aria-label={img.alt}
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/92"
+      className="fixed inset-0 z-[120] flex touch-none items-center justify-center overflow-hidden bg-black"
       onClick={onClose}
-      onTouchStart={(e) => setTouchX(e.touches[0].clientX)}
+      onTouchStart={(e) => setTouch({ x: e.touches[0].clientX, y: e.touches[0].clientY })}
       onTouchEnd={(e) => {
-        if (touchX == null) return
-        const dx = e.changedTouches[0].clientX - touchX
-        if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1)
-        setTouchX(null)
+        if (!touch) return
+        // When the photo is turned sideways, "sideways" for the viewer is up and down.
+        const d = rotated ? e.changedTouches[0].clientY - touch.y : e.changedTouches[0].clientX - touch.x
+        if (Math.abs(d) > 50) go(d < 0 ? 1 : -1)
+        setTouch(null)
       }}
     >
       <img
         key={img.src}
         src={img.src}
         alt={img.alt}
-        className="max-h-[88vh] max-w-[92vw] rounded-lg object-contain shadow-2xl"
+        className={
+          rotated
+            ? 'absolute left-1/2 top-1/2 h-[100vw] w-[100dvh] max-w-none -translate-x-1/2 -translate-y-1/2 rotate-90 object-contain'
+            : 'max-h-[100dvh] max-w-[100vw] object-contain'
+        }
+        onLoad={(e) => setWide(e.currentTarget.naturalWidth > e.currentTarget.naturalHeight)}
         onClick={(e) => e.stopPropagation()}
       />
-      <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[13px] text-ink/75">
+      {portrait && wide && (
+        <button
+          type="button"
+          aria-pressed={turned}
+          onClick={(e) => (e.stopPropagation(), setTurned((t) => !t))}
+          className="glass absolute left-4 top-[max(1rem,env(safe-area-inset-top))] flex h-11 items-center gap-2 rounded-full px-4 text-[13px] font-medium"
+        >
+          <RotateCw size={16} /> {turned ? 'Upright' : 'Rotate'}
+        </button>
+      )}
+      <p className="glass pointer-events-none absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 w-max max-w-[92vw] -translate-x-1/2 truncate rounded-full px-4 py-2 text-[12px] text-ink/85">
         {img.caption || img.alt} · {index + 1} / {images.length}
       </p>
-      <button type="button" aria-label="Close" onClick={onClose} className="glass absolute right-5 top-5 grid h-11 w-11 place-items-center rounded-full">
+      <button type="button" aria-label="Close" onClick={onClose} className="glass absolute right-4 top-[max(1rem,env(safe-area-inset-top))] grid h-11 w-11 place-items-center rounded-full">
         <X size={20} />
       </button>
-      {images.length > 1 && (
+      {images.length > 1 && !rotated && (
         <>
           <button
             type="button"

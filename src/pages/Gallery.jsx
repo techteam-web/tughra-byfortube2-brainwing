@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import gsap from 'gsap'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react'
 import { GALLERY } from '../data/media'
-import { prefersReducedMotion, useIsDesktop } from '../lib/hooks'
-import { Chrome, EyeToggle, Segmented } from '../components/ui'
+import { enterFullscreen, exitFullscreen, prefersReducedMotion, useIsDesktop } from '../lib/hooks'
+import { Chrome, EyeToggle, Lightbox, Segmented } from '../components/ui'
 
 const SETS = [
   { value: 'exterior', label: 'Exterior' },
@@ -26,25 +26,52 @@ export default function Gallery() {
   const imgRef = useRef(null)
   const thumbsRef = useRef(null)
   const touchX = useRef(null)
+  const [full, setFull] = useState(false) // full-screen photo viewer
+  const wentFullscreen = useRef(false) // did the viewer switch the browser to fullscreen?
+
+  const openFull = () => {
+    setFull(true)
+    enterFullscreen().then((ok) => (wentFullscreen.current = ok))
+  }
+  const closeFull = useCallback(() => {
+    setFull(false)
+    if (wentFullscreen.current) exitFullscreen()
+    wentFullscreen.current = false
+  }, [])
+
+  // Esc or the phone's Back gesture leaves browser fullscreen: close the viewer with it.
+  useEffect(() => {
+    const onChange = () => {
+      if (!document.fullscreenElement && !document.webkitFullscreenElement && wentFullscreen.current) closeFull()
+    }
+    document.addEventListener('fullscreenchange', onChange)
+    document.addEventListener('webkitfullscreenchange', onChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange)
+      document.removeEventListener('webkitfullscreenchange', onChange)
+      if (wentFullscreen.current) exitFullscreen()
+    }
+  }, [closeFull])
 
   const go = useCallback((d) => setIndex((i) => (i + d + images.length) % images.length), [images.length])
 
   useEffect(() => setIndex(0), [set])
 
   useEffect(() => {
-    if (paused || prefersReducedMotion()) return
+    if (paused || full || prefersReducedMotion()) return
     const t = setTimeout(() => go(1), AUTO_ADVANCE_MS)
     return () => clearTimeout(t)
-  }, [index, paused, go])
+  }, [index, paused, full, go])
 
   useEffect(() => {
+    if (full) return // the viewer handles the arrow keys while it is open
     const onKey = (e) => {
       if (e.key === 'ArrowRight') go(1)
       if (e.key === 'ArrowLeft') go(-1)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [go])
+  }, [go, full])
 
   useEffect(() => {
     thumbsRef.current?.querySelector('[aria-current="true"]')?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' })
@@ -78,7 +105,8 @@ export default function Gallery() {
         src={image.src}
         alt={image.alt}
         onLoad={(e) => setRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
-        className="absolute inset-0 h-full w-full object-contain p-2 lg:p-3"
+        onClick={openFull}
+        className="absolute inset-0 h-full w-full cursor-zoom-in object-contain p-2 lg:p-3"
       />
 
       <Chrome hidden={hidden}>
@@ -92,7 +120,18 @@ export default function Gallery() {
             <ChevronRight size={22} />
           </button>
         </div>
-        <p className="glass absolute left-4 top-4 max-w-[70%] truncate rounded-full px-4 py-2 text-[12px] text-ink/85">{image.caption || image.alt}</p>
+        <p className="glass absolute left-3 top-3 max-w-[calc(100%-4.75rem)] truncate rounded-full px-4 py-2 text-[12px] text-ink/85 lg:left-4 lg:top-4">
+          {image.caption || image.alt}
+        </p>
+        <button
+          type="button"
+          onClick={openFull}
+          aria-label="View photo full screen"
+          title="View full screen"
+          className="glass absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full text-ink/90 transition hover:text-ink lg:right-4 lg:top-4 lg:h-10 lg:w-10"
+        >
+          <Maximize2 size={16} />
+        </button>
       </Chrome>
     </div>
   )
@@ -137,6 +176,7 @@ export default function Gallery() {
           {counter}
           {controls}
         </div>
+        {full && <Lightbox images={images} index={index} onIndex={setIndex} onClose={closeFull} />}
       </div>
     )
   }
@@ -151,6 +191,7 @@ export default function Gallery() {
           {thumbs}
         </Chrome>
       </div>
+      {full && <Lightbox images={images} index={index} onIndex={setIndex} onClose={closeFull} />}
     </div>
   )
 }
