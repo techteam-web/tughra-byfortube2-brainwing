@@ -81,7 +81,7 @@ export const GALLERY = {
   exterior: [
     img('exterior/evening-wide', 'Tughra Royale balconies at dusk'),
     img('exterior/golden-hour', 'Tower at golden hour'),
-    img('exterior/day', 'Tower in daylight'),
+    img('exterior/twilight', 'Rooftop crown above the city at twilight'),
     img('exterior/evening-tower', 'Tower lit up in the evening'),
     img('exterior/metro', 'Tower above the metro line'),
   ],
