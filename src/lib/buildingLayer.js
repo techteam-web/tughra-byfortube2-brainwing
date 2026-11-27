@@ -3,6 +3,8 @@
 import { MercatorCoordinate } from 'maplibre-gl'
 import { AmbientLight, Camera, DirectionalLight, Matrix4, MeshLambertMaterial, NoToneMapping, Scene, Vector3, WebGLRenderer } from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { createBirds } from './birds'
+import { prefersReducedMotion } from './hooks'
 
 // Web copy of public/Building_Updated (smaller textures, compact geometry, same triangles).
 const MODEL_URL = '/models/tughra-royale.glb'
@@ -78,6 +80,11 @@ export function createBuildingLayer(lngLat, { onLoad, onError } = {}) {
   const scene = new Scene()
   let renderer = null
   let removed = false
+  let mapRef = null
+  // Gulls circling the tower. They keep the map redrawing while they fly.
+  const birds = createBirds(FOOTPRINT_CENTRE)
+  const flying = !prefersReducedMotion()
+  scene.add(birds.group)
 
   const release = (object) =>
     object.traverse((node) => {
@@ -95,6 +102,7 @@ export function createBuildingLayer(lngLat, { onLoad, onError } = {}) {
     renderingMode: '3d',
 
     onAdd(map, gl) {
+      mapRef = map
       renderer = new WebGLRenderer({ canvas: map.getCanvas(), context: gl, antialias: true })
       renderer.autoClear = false
       renderer.toneMapping = NoToneMapping // nothing may shift the colours
@@ -132,13 +140,16 @@ export function createBuildingLayer(lngLat, { onLoad, onError } = {}) {
     render(_gl, args) {
       // Matte materials look the same from any side, so MapLibre’s combined matrix is all that is needed.
       camera.projectionMatrix.fromArray(args.defaultProjectionData.mainMatrix).multiply(placement)
+      if (flying) birds.update(performance.now() / 1000)
       renderer.resetState()
       renderer.render(scene, camera)
+      if (flying) mapRef?.triggerRepaint()
     },
 
     onRemove() {
       removed = true
       release(scene)
+      birds.dispose()
       renderer?.dispose()
     },
   }
