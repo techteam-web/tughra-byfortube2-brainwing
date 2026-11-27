@@ -19,7 +19,7 @@ export const PAGE_TITLES = {
 
 export const PROJECT_STATS = [
   { value: '28', label: 'Floors' },
-  { value: '108.9 m', label: 'Sky Terrace', gold: true },
+  { value: '111.3 m', label: 'Sky Terrace', gold: true },
   { value: '4 & 5 BHK', label: 'Residences' },
 ]
 

@@ -10,8 +10,8 @@ import { Chrome, DragHint, EyeToggle, Segmented } from '../components/ui'
 
 const MODE_ICONS = { day: Sun, evening: Sunset, night: Moon }
 const MODE_OPTIONS = LIGHT_MODES.map((m) => ({ value: m.key, label: m.label, Icon: MODE_ICONS[m.key] }))
-const DEFAULT_FLOOR = 1 // 17th Floor
-const fmtHeight = (h) => `${h} m`
+const DEFAULT_FLOOR = 1 // 27th Floor, the highest residential floor
+const fmtHeight = (h) => `${h.toFixed(1)} m`
 
 // Landmarks are placed by real-world bearing; pitch dips with distance and floor height.
 const LANDMARKS = VIEW_LANDMARKS.map((l) => ({

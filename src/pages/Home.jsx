@@ -108,7 +108,7 @@ export default function Home() {
               From Ordinary.
             </h1>
             <p className="hero-in mt-5 max-w-[420px] text-[15px] leading-relaxed text-ink/80">
-              Spacious 4 &amp; 5 BHK sky residences crowned in architectural copper, rising 108.9 metres above Mumbai
+              Spacious 4 &amp; 5 BHK sky residences crowned in architectural copper, rising 111.3 metres above Mumbai
               Central and the Arabian Sea.
             </p>
             <div className="hero-in pointer-events-auto mt-8 flex items-center gap-3">
@@ -145,7 +145,7 @@ export default function Home() {
               From Ordinary.
             </h1>
             <p className="hero-in mt-3 text-[14px] leading-relaxed text-ink/80 md:text-[16px] land:mt-1.5">
-              108.9 m sky terrace overlooking the Arabian Sea.
+              111.3 m sky terrace overlooking the Arabian Sea.
             </p>
             <div className="hero-in mt-5 compact:mt-3">
               <Link to="/views" className="btn-gold pointer-events-auto h-12 w-full text-[15px] compact:h-11 md:w-80 land:h-10 land:w-60">

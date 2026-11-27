@@ -75,26 +75,29 @@ export const SCENES = {
 const sceneByNumber = Object.fromEntries(Object.keys(SCENES).map((id) => [Number(id.split('-')[0]), id]))
 
 // Top to bottom. Scene numbers are the Marzipano export prefixes: [day, evening, night].
+// Heights are the finished floor levels in metres above ground (±0.00) from the building
+// section in "2D Render.dwg". The export's floors 1-17 are the residential floors 11th-27th;
+// the podium view is from the 10th floor amenity deck and the terrace view from the pool terrace.
 const FLOOR_ROWS = [
-  ['Terrace', 'TER', 108.9, [18, 19, 38]],
-  ['17th Floor', '17', 104.7, [17, 20, 39]],
-  ['16th Floor', '16', 100.5, [16, 21, 40]],
-  ['15th Floor', '15', 96.6, [15, 22, 41]],
-  ['14th Floor', '14', 92.7, [14, 23, 42]],
-  ['13th Floor', '13', 88.8, [13, 24, 43]],
-  ['12th Floor', '12', 84.9, [12, 25, 44]],
-  ['11th Floor', '11', 81, [11, 26, 45]],
-  ['10th Floor', '10', 77.1, [10, 27, 46]],
-  ['9th Floor', '9', 73.2, [9, 28, 47]],
-  ['8th Floor', '8', 69.3, [8, 29, 48]],
-  ['7th Floor', '7', 65.4, [7, 30, 49]],
-  ['6th Floor', '6', 61.5, [6, 31, 50]],
-  ['5th Floor', '5', 57.6, [5, 32, 51]],
-  ['4th Floor', '4', 53.7, [4, 33, 52]],
-  ['3rd Floor', '3', 49.8, [3, 34, 53]],
-  ['2nd Floor', '2', 45.9, [2, 35, 54]],
-  ['1st Floor', '1', 42, [1, 36, 55]],
-  ['Podium', 'POD', 37.65, [0, 37, 56]],
+  ['Terrace', 'TER', 111.3, [18, 19, 38]],
+  ['27th Floor', '27', 105.3, [17, 20, 39]],
+  ['26th Floor', '26', 101.1, [16, 21, 40]],
+  ['25th Floor', '25', 97.2, [15, 22, 41]],
+  ['24th Floor', '24', 93.3, [14, 23, 42]],
+  ['23rd Floor', '23', 89.4, [13, 24, 43]],
+  ['22nd Floor', '22', 85.5, [12, 25, 44]],
+  ['21st Floor', '21', 81.6, [11, 26, 45]],
+  ['20th Floor', '20', 77.7, [10, 27, 46]],
+  ['19th Floor', '19', 73.8, [9, 28, 47]],
+  ['18th Floor', '18', 69.9, [8, 29, 48]],
+  ['17th Floor', '17', 66, [7, 30, 49]],
+  ['16th Floor', '16', 62.1, [6, 31, 50]],
+  ['15th Floor', '15', 58.2, [5, 32, 51]],
+  ['14th Floor', '14', 54.3, [4, 33, 52]],
+  ['13th Floor', '13', 50.4, [3, 34, 53]],
+  ['12th Floor', '12', 46.5, [2, 35, 54]],
+  ['11th Floor', '11', 42.6, [1, 36, 55]],
+  ['Podium', 'POD', 36.3, [0, 37, 56]],
 ]
 
 export const PANO_FLOORS = FLOOR_ROWS.map(([label, short, height, [d, e, n]]) => ({
@@ -111,9 +114,10 @@ export const LIGHT_MODES = [
 ]
 
 // Compass calibration: the yaw (radians) at which the camera looks due west.
-// The exported starting views all face the sunset over the Arabian Sea, so
-// their average yaw is used. Adjust here if the compass reads off.
-export const WEST_YAW = 1.79
+// Measured on the panoramas themselves: the Mahalaxmi Racecourse oval and the twin spires of
+// The Imperial (Tardeo) both line up with their true map bearings from the tower at this value.
+// All 57 scenes share it (they match each other to within 2 degrees).
+export const WEST_YAW = 1.068
 
 // Home page background panorama (drone shot from the terrace) with a
 // transparent foreground layer of the tower's own balcony on top.
