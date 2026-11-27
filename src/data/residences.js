@@ -1,6 +1,3 @@
-const isoFrames = (id) =>
-  Array.from({ length: 120 }, (_, i) => `/isoframes/${id}/${String(i + 1).padStart(3, '0')}.webp`)
-
 // Areas are in sq.ft. `null` means the figure has not been supplied yet;
 // the UI shows a dash for it. 4 BHK numbers are from the UI integration notes.
 export const RESIDENCES = [
@@ -20,7 +17,6 @@ export const RESIDENCES = [
       { name: 'Media Room', area: 190 },
       { name: 'Island Kitchen', area: 180 },
     ],
-    isoFrames: isoFrames('4bhk'),
     // Drop the 2D drawing at this path to enable the 2D view and preview.
     plan2d: null, // e.g. '/plans/4bhk-plan.webp'
     planPdf: '/plans/tughra-royale-4bhk-plan.pdf',
@@ -43,7 +39,6 @@ export const RESIDENCES = [
       { name: 'Bedroom 04', area: null },
       { name: 'Bedroom 05', area: null },
     ],
-    isoFrames: isoFrames('5bhk'),
     plan2d: null, // e.g. '/plans/5bhk-plan.webp'
     planPdf: '/plans/tughra-royale-5bhk-plan.pdf',
   },
@@ -68,6 +63,19 @@ export const TOWER_LEVELS = [
   ...Array.from({ length: 17 }, (_, i) => i + 11).map((n) => ({ id: `f${n}`, num: String(n), label: `${ordinal(n)} Floor`, level: n, kind: 'residence' })),
   { id: 'terrace', num: 'T', label: 'Terrace', kind: 'terrace' },
 ]
+
+/**
+ * Plans of the shared levels, keyed by level id (web copies of /public/floorplans).
+ * A level without a plan here cannot be opened from the tower.
+ */
+const sharedPlan = (file, title) => ({ src: `/media/plans/${file}.webp`, title })
+export const LEVEL_PLANS = {
+  ground: sharedPlan('ground', 'Ground Floor Plan'),
+  retail: sharedPlan('podium-1', '1st Podium Plan'),
+  // The podium levels above share one typical parking plan.
+  ...Object.fromEntries([2, 3, 4, 5, 6, 7].map((n) => [`podium-${pad2(n)}`, sharedPlan('parking', 'Parking Floor Plan')])),
+  amenities: sharedPlan('amenity', 'Amenity Floor Plan'),
+}
 
 export const LEVEL_KIND_LABEL = {
   lobby: 'Entrance',

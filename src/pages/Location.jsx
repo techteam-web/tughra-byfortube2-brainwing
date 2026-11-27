@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { LngLatBounds, Map as MapLibreMap, Marker, NavigationControl, setWorkerUrl } from 'maplibre-gl'
 import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
-import { Car, Footprints, RotateCcw } from 'lucide-react'
+import { Car, Footprints, Rotate3d, RotateCcw } from 'lucide-react'
 import { PLACE_CATEGORIES, TOWER, TRAVEL_MODES, estimateTrip, fetchRoute } from '../data/places'
 import { applyDarkStyle } from '../lib/mapStyle'
 import { prefersReducedMotion, useIsDesktop, useIsLandscapePhone, useIsRoomy, useMediaQuery } from '../lib/hooks'
@@ -16,6 +16,9 @@ const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty'
 // Close and tilted enough to see the 3D tower on its plot.
 const HOME_VIEW = { center: TOWER.at, zoom: 16.3, pitch: 62, bearing: -20 }
 const EMPTY = { type: 'FeatureCollection', features: [] }
+// The slow turn around the tower: a quarter turn at a time, one full turn a minute.
+const SPIN_STEP_DEG = 90
+const SPIN_STEP_MS = 15000
 const MODE_OPTIONS = [
   { value: 'drive', label: 'By Car', Icon: Car },
   { value: 'walk', label: 'Walking', Icon: Footprints },
@@ -63,6 +66,9 @@ export default function Location() {
   const [selectedId, setSelectedId] = useState(linked?.id ?? null)
   const [trips, setTrips] = useState({}) // `${mode}:${id}` -> trip
   const [mapReady, setMapReady] = useState(false)
+  // The map turns slowly around the tower, so it is seen from every side, until someone moves the map.
+  const [spinning, setSpinning] = useState(() => !linked && !prefersReducedMotion())
+  const spinRef = useRef(spinning) // read inside map events, which fire before React re-renders
 
   const containerRef = useRef(null)
   const mapRef = useRef(null)
@@ -144,6 +150,42 @@ export default function Location() {
     }
   }, [isDesktop])
 
+  const setSpin = useCallback((on) => {
+    spinRef.current = on
+    setSpinning(on)
+  }, [])
+
+  // Turn around the tower. Each quarter turn starts when the last one (or the opening flight) ends.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!mapReady || !map || !spinning) return
+    const turn = () => {
+      if (!spinRef.current) return
+      map.easeTo({ bearing: map.getBearing() + SPIN_STEP_DEG, around: TOWER.at, duration: SPIN_STEP_MS, easing: (t) => t })
+    }
+    // Any touch, click or wheel on the map hands it back to the visitor.
+    const stop = () => setSpin(false)
+    const container = map.getContainer()
+    const inputs = ['pointerdown', 'touchstart', 'wheel']
+    inputs.forEach((type) => container.addEventListener(type, stop, { capture: true, passive: true }))
+    map.on('moveend', turn)
+    if (!map.isMoving()) turn()
+    return () => {
+      inputs.forEach((type) => container.removeEventListener(type, stop, { capture: true }))
+      map.off('moveend', turn)
+    }
+  }, [mapReady, spinning, setSpin])
+
+  const toggleSpin = () => {
+    const map = mapRef.current
+    if (spinning) {
+      setSpin(false)
+      map?.stop()
+    } else {
+      resetMap() // back to the tower first, then it turns
+    }
+  }
+
   // Estimate → real route times for the visible list, one request at a time.
   useEffect(() => {
     let alive = true
@@ -198,6 +240,7 @@ export default function Location() {
   }, [selected, mode, mapReady, padding])
 
   const choosePlace = (p) => {
+    setSpin(false)
     setSelectedId(p.id)
     const next = new URLSearchParams(params)
     next.set('place', p.id)
@@ -207,7 +250,12 @@ export default function Location() {
   const resetMap = () => {
     setSelectedId(null)
     setParams({}, { replace: true })
-    if (mapRef.current) mapRef.current.flyTo({ ...homeView(mapRef.current), duration: prefersReducedMotion() ? 0 : 1400 })
+    const map = mapRef.current
+    if (!map) return
+    setSpin(false)
+    map.flyTo({ ...homeView(map), duration: prefersReducedMotion() ? 0 : 1400 })
+    // Start turning again once back at the tower.
+    if (!prefersReducedMotion()) map.once('moveend', () => mapRef.current === map && setSpin(true))
   }
 
   const panel = (
@@ -273,6 +321,18 @@ export default function Location() {
       ) : (
         <span className="min-w-0 truncate text-ink/65">Pick a place to see the route</span>
       )}
+      <button
+        type="button"
+        onClick={toggleSpin}
+        aria-pressed={spinning}
+        aria-label={spinning ? 'Stop turning around the tower' : 'Turn around the tower'}
+        title={spinning ? 'Stop turning' : 'See the tower from every side'}
+        className={`ml-auto grid h-8 w-8 shrink-0 place-items-center rounded-full border transition-colors ${
+          spinning ? 'border-gold bg-gold text-[#1a130d]' : 'border-white/20 text-ink hover:border-gold/60'
+        }`}
+      >
+        <Rotate3d size={15} />
+      </button>
       <button type="button" onClick={resetMap} className="btn-outline h-8 shrink-0 whitespace-nowrap px-3.5 text-[12px]">
         <RotateCcw size={13} /> Reset Map
       </button>
@@ -301,7 +361,7 @@ export default function Location() {
       <aside className={`glass absolute bottom-6 left-6 top-[88px] flex flex-col rounded-2xl p-5 compact:bottom-4 compact:p-4 ${isShortDesktop ? 'w-[440px]' : 'w-[340px]'}`}>
         {panel}
       </aside>
-      <div className="absolute bottom-12 right-16">{routeBar}</div>
+      <div className="absolute bottom-[4.5rem] right-16">{routeBar}</div>
     </div>
   )
 }

@@ -1,13 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import gsap from 'gsap'
 import { useGSAP } from '@gsap/react'
 import { ArrowLeft, Download, FileImage, Minus, Plus } from 'lucide-react'
-import { DEFAULT_LEVEL, LEVEL_KIND_LABEL, LEVEL_NOTES, RESIDENCES, SQFT_TO_SQM, TOWER_LEVELS } from '../data/residences'
+import { DEFAULT_LEVEL, LEVEL_KIND_LABEL, LEVEL_NOTES, LEVEL_PLANS, RESIDENCES, SQFT_TO_SQM, TOWER_LEVELS } from '../data/residences'
 import { prefersReducedMotion, useIsDesktop, useIsRoomy } from '../lib/hooks'
 import { Segmented } from '../components/ui'
 import TowerPicker from '../components/TowerPicker'
-import Turntable from '../components/Turntable'
 
 // 'cream' matches the residences screen design; 'dark' matches the rest of the site.
 const FP_THEME = 'dark'
@@ -18,6 +17,8 @@ const TOWER_COLORS = {
 
 const RESIDENCE_COUNT = TOWER_LEVELS.filter((l) => l.kind === 'residence').length
 const isResidence = (l) => l?.kind === 'residence'
+// Residence floors and shared levels with a supplied plan can be opened.
+const canOpen = (l) => isResidence(l) || Boolean(LEVEL_PLANS[l?.id])
 const SECTIONS = [
   { value: 'tower', label: 'Tower' },
   { value: 'details', label: 'Layout' },
@@ -49,10 +50,9 @@ function usePdfAvailable(url) {
 export default function FloorPlans() {
   const isDesktop = useIsDesktop()
   const [params, setParams] = useSearchParams()
-  const levelId = TOWER_LEVELS.some((l) => l.id === params.get('level') && isResidence(l)) ? params.get('level') : DEFAULT_LEVEL
+  const levelId = TOWER_LEVELS.some((l) => l.id === params.get('level') && canOpen(l)) ? params.get('level') : DEFAULT_LEVEL
   const homeId = RESIDENCES.some((r) => r.id === params.get('home')) ? params.get('home') : RESIDENCES[0].id
   const plansOpen = params.get('plans') === '1'
-  const view = params.get('view') === '2d' ? '2d' : 'iso'
   const [hoveredId, setHoveredId] = useState(null)
   const [unit, setUnit] = useState('sqft')
   // Phones show one section at a time; portrait tablets have room for both.
@@ -192,7 +192,7 @@ export default function FloorPlans() {
       </p>
       <button
         type="button"
-        onClick={() => openPlans(isResidence(shown) ? shown.id : level.id)}
+        onClick={() => openPlans(canOpen(shown) ? shown.id : level.id)}
         className="pointer-events-auto mt-5 whitespace-nowrap rounded-full bg-[var(--fp-button)] px-6 py-3 text-[15px] font-semibold text-[var(--fp-button-ink)] transition hover:opacity-90"
       >
         Open plans
@@ -207,7 +207,7 @@ export default function FloorPlans() {
       hoveredId={hoveredId}
       onHover={setHoveredId}
       onPick={openPlans}
-      isPickable={isResidence}
+      isPickable={canOpen}
       colors={TOWER_COLORS}
       className="tower-fade h-full w-full"
     />
@@ -316,12 +316,10 @@ export default function FloorPlans() {
           key={home.id}
           home={home}
           level={level}
-          view={view}
           unit={unit}
           isDesktop={isDesktop}
-          onView={(v) => update({ view: v === 'iso' ? null : v })}
           onHome={(id) => update({ home: id })}
-          onClose={() => update({ plans: null, view: null })}
+          onClose={() => update({ plans: null })}
           unitToggle={unitToggle}
         />
       )}
@@ -329,8 +327,12 @@ export default function FloorPlans() {
   )
 }
 
-/** Full-area plan view opened from "Open plans" or a click on the tower. */
-function PlansView({ home, level, view, unit, isDesktop, onView, onHome, onClose, unitToggle }) {
+/**
+ * Full-area plan view opened from "Open plans" or a click on the tower.
+ * A shared level shows its one plan; a residence floor shows the chosen home's plan.
+ */
+function PlansView({ home, level, unit, isDesktop, onHome, onClose, unitToggle }) {
+  const levelPlan = LEVEL_PLANS[level.id]
   const pdfReady = usePdfAvailable(home.planPdf)
   const panel = useRef(null)
 
@@ -347,27 +349,6 @@ function PlansView({ home, level, view, unit, isDesktop, onView, onHome, onClose
       gsap.from('.pv-in', { autoAlpha: 0, y: 12, duration: 0.5, stagger: 0.06, delay: 0.15, ease: 'power2.out' })
     },
     { scope: panel },
-  )
-
-  const viewToggle = (
-    <div className="flex items-center gap-1 rounded-full border border-[var(--fp-ink)]/15 bg-[var(--fp-bg)]/90 p-1 backdrop-blur">
-      {[
-        ['iso', 'Isometric'],
-        ['2d', 'Floor plan'],
-      ].map(([k, label]) => (
-        <button
-          key={k}
-          type="button"
-          onClick={() => onView(k)}
-          aria-pressed={view === k}
-          className={`whitespace-nowrap rounded-full px-5 py-2 text-[12px] max-xs:px-3.5 max-lg:land:px-2.5 max-lg:land:tracking-[0.06em] uppercase tracking-[0.16em] transition-colors ${
-            view === k ? 'bg-[var(--fp-accent)] text-[var(--fp-bg)]' : 'text-[var(--fp-ink-soft)]'
-          }`}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
   )
 
   const homePicker = (
@@ -416,8 +397,11 @@ function PlansView({ home, level, view, unit, isDesktop, onView, onHome, onClose
     </div>
   )
 
-  const drawing =
-    view === 'iso' ? <Turntable frames={home.isoFrames} alt={`${home.title} isometric layout`} className="h-full w-full" /> : <PlanDrawing home={home} />
+  const drawing = levelPlan ? (
+    <PlanDrawing key={level.id} src={levelPlan.src} alt={`${level.label}: ${levelPlan.title}`} />
+  ) : (
+    <PlanDrawing key={home.id} src={home.plan2d} alt={`${home.title} 2D floor plan`} emptyText={`The ${home.label} floor plan drawing will appear here.`} />
+  )
 
   const backRow = (
     <div className={`pv-in absolute z-10 flex items-center gap-3 ${isDesktop ? 'left-10 top-[108px]' : 'left-3 top-[max(0.75rem,env(safe-area-inset-top))]'}`}>
@@ -425,23 +409,29 @@ function PlansView({ home, level, view, unit, isDesktop, onView, onHome, onClose
         type="button"
         onClick={onClose}
         aria-label="Back to the tower"
-        className="grid h-10 w-10 place-items-center rounded-full border border-[var(--fp-ink)]/20 bg-[var(--fp-bg)]/92 text-[var(--fp-ink)]"
+        className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-[var(--fp-ink)]/20 bg-[var(--fp-bg)]/92 text-[var(--fp-ink)]"
       >
         <ArrowLeft size={18} />
       </button>
-      <span className="rounded-full bg-[var(--fp-bg)]/92 px-3 py-1.5 text-[13px] text-[var(--fp-ink-soft)]">{level.label}</span>
+      <span className="rounded-full bg-[var(--fp-bg)]/92 px-3 py-1.5 text-[13px] text-[var(--fp-ink-soft)]">
+        {level.label}
+        {levelPlan && <span className="text-[var(--fp-ink)]"> · {levelPlan.title}</span>}
+      </span>
     </div>
   )
 
   return (
-    <div ref={panel} className="absolute inset-0 z-30 bg-[var(--fp-bg)]" role="dialog" aria-label={`${home.title} plans, ${level.label}`}>
+    <div ref={panel} className="absolute inset-0 z-30 bg-[var(--fp-bg)]" role="dialog" aria-label={`${levelPlan ? levelPlan.title : `${home.title} plans`}, ${level.label}`}>
       {isDesktop ? (
         <>
           <div className="absolute inset-x-4 bottom-10 top-[88px] overflow-hidden rounded-2xl border border-[var(--fp-ink)]/10">{drawing}</div>
           {backRow}
-          <div className="pv-in absolute left-10 top-1/2 z-10 w-fit -translate-y-1/2">{homePicker}</div>
-          <div className="pv-in absolute right-10 top-1/2 z-10 w-[17rem] -translate-y-1/2">{summary}</div>
-          <div className="pv-in absolute bottom-16 left-1/2 z-10 -translate-x-1/2">{viewToggle}</div>
+          {!levelPlan && (
+            <>
+              <div className="pv-in absolute left-10 top-1/2 z-10 w-fit -translate-y-1/2">{homePicker}</div>
+              <div className="pv-in absolute right-10 top-1/2 z-10 w-[17rem] -translate-y-1/2">{summary}</div>
+            </>
+          )}
         </>
       ) : (
         <div className="absolute inset-x-0 bottom-[var(--nav-h)] top-0 flex flex-col land:flex-row">
@@ -449,42 +439,90 @@ function PlansView({ home, level, view, unit, isDesktop, onView, onHome, onClose
             <div className="absolute inset-0">{drawing}</div>
             {backRow}
           </div>
-          <div className="flex shrink-0 flex-col gap-3 p-3 pb-6 land:w-56 land:justify-center">
-            <div className="pv-in mx-auto">{viewToggle}</div>
-            <div className="pv-in">{homePicker}</div>
-          </div>
+          {!levelPlan && <div className="pv-in flex shrink-0 flex-col justify-center p-3 pb-6 land:w-56">{homePicker}</div>}
+          {levelPlan && <div className="h-6 shrink-0 land:hidden" />}
         </div>
       )}
     </div>
   )
 }
 
-/** Light cream drawing box with zoom, or a note until the drawing is supplied. */
-function PlanDrawing({ home }) {
+/**
+ * A plan drawing on white. Zoom with the buttons, the mouse wheel or a double click;
+ * drag to move around a zoomed plan. Shows a note until the drawing is supplied.
+ */
+function PlanDrawing({ src, alt, emptyText }) {
+  const box = useRef(null)
+  const drag = useRef(null)
   const [zoom, setZoom] = useState(1)
-  const style = useMemo(() => ({ transform: `scale(${zoom})` }), [zoom])
-  const zoomBtn = 'grid h-9 w-9 place-items-center rounded-full bg-white text-[#3a2c20] shadow disabled:opacity-40'
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [dragging, setDragging] = useState(false)
+
+  // Keep the zoomed drawing covering the box: it can't be dragged out of view.
+  const clamp = useCallback((p, z) => {
+    const r = box.current?.getBoundingClientRect()
+    if (!r) return p
+    const mx = (r.width * (z - 1)) / 2
+    const my = (r.height * (z - 1)) / 2
+    return { x: Math.max(-mx, Math.min(mx, p.x)), y: Math.max(-my, Math.min(my, p.y)) }
+  }, [])
+
+  const zoomTo = (z) => {
+    const next = Math.min(4, Math.max(1, z))
+    setPan((p) => clamp({ x: (p.x * next) / zoom, y: (p.y * next) / zoom }, next))
+    setZoom(next)
+  }
+
+  const zoomBtn = 'grid h-9 w-9 place-items-center rounded-full border border-black/10 bg-white text-[#3a2c20] shadow disabled:opacity-40'
+
+  if (!src) {
+    return (
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-cream px-6 text-center text-[#3a2c20]">
+        <FileImage size={28} className="opacity-50" />
+        <p className="text-[12px] uppercase tracking-[0.2em] opacity-70">Coming soon</p>
+        <p className="max-w-[18rem] font-display text-[17px]">{emptyText}</p>
+      </div>
+    )
+  }
+
   return (
-    <div className="absolute inset-0 overflow-auto bg-cream">
-      {home.plan2d ? (
-        <>
-          <img src={home.plan2d} alt={`${home.title} 2D floor plan`} className="h-full w-full origin-center object-contain p-4 pt-16 transition-transform lg:p-24" style={style} />
-          <div className="absolute right-4 top-20 flex flex-col gap-2 lg:bottom-24 lg:right-10 lg:top-auto">
-            <button type="button" aria-label="Zoom in" className={zoomBtn} disabled={zoom >= 3} onClick={() => setZoom((z) => Math.min(3, z + 0.25))}>
-              <Plus size={16} />
-            </button>
-            <button type="button" aria-label="Zoom out" className={zoomBtn} disabled={zoom <= 1} onClick={() => setZoom((z) => Math.max(1, z - 0.25))}>
-              <Minus size={16} />
-            </button>
-          </div>
-        </>
-      ) : (
-        <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-[#3a2c20]">
-          <FileImage size={28} className="opacity-50" />
-          <p className="text-[12px] uppercase tracking-[0.2em] opacity-70">Coming soon</p>
-          <p className="max-w-[18rem] font-display text-[17px]">The {home.label} floor plan drawing will appear here.</p>
-        </div>
-      )}
+    <div
+      ref={box}
+      className={`absolute inset-0 select-none overflow-hidden bg-white ${zoom > 1 ? (dragging ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
+      style={{ touchAction: zoom > 1 ? 'none' : 'manipulation' }}
+      onWheel={(e) => zoomTo(zoom + (e.deltaY < 0 ? 0.25 : -0.25))}
+      onDoubleClick={() => zoomTo(zoom > 1 ? 1 : 2)}
+      onPointerDown={(e) => {
+        if (zoom === 1 || e.target.closest('button')) return
+        drag.current = { x: e.clientX - pan.x, y: e.clientY - pan.y }
+        e.currentTarget.setPointerCapture(e.pointerId)
+        setDragging(true)
+      }}
+      onPointerMove={(e) => drag.current && setPan(clamp({ x: e.clientX - drag.current.x, y: e.clientY - drag.current.y }, zoom))}
+      onPointerUp={() => {
+        drag.current = null
+        setDragging(false)
+      }}
+      onPointerCancel={() => {
+        drag.current = null
+        setDragging(false)
+      }}
+    >
+      <img
+        src={src}
+        alt={alt}
+        draggable={false}
+        className="h-full w-full object-contain p-3 pt-16 lg:p-14"
+        style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transition: dragging ? 'none' : 'transform 0.2s ease-out' }}
+      />
+      <div className="absolute bottom-4 right-4 flex flex-col gap-2 lg:bottom-6 lg:right-6 max-lg:land:bottom-7">
+        <button type="button" aria-label="Zoom in" className={zoomBtn} disabled={zoom >= 4} onClick={() => zoomTo(zoom + 0.5)}>
+          <Plus size={16} />
+        </button>
+        <button type="button" aria-label="Zoom out" className={zoomBtn} disabled={zoom <= 1} onClick={() => zoomTo(zoom - 0.5)}>
+          <Minus size={16} />
+        </button>
+      </div>
     </div>
   )
 }
