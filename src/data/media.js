@@ -26,14 +26,6 @@ export const AMENITIES = [
     images: [img('amenities/theatre', 'Private theatre with starlight ceiling')],
   },
   {
-    id: 'garden',
-    title: 'Planted Garden Terrace',
-    eyebrow: 'Podium · 37.65 m',
-    blurb: 'Landscaped courts & shaded swing seating',
-    category: 'wellness',
-    images: [img('amenities/garden', 'Planted garden terrace on the podium')],
-  },
-  {
     id: 'banquet',
     title: 'Grand Banquet Hall',
     eyebrow: 'Social · Divisible Hall',
@@ -56,17 +48,20 @@ export const AMENITIES = [
     id: 'games',
     title: 'Games Lounge',
     eyebrow: 'Social · Club Level',
-    blurb: 'Billiards, table tennis & chess lounge',
+    blurb: 'Billiards, table tennis & lounge seating',
     category: 'social',
-    images: [img('amenities/games-1', 'Games lounge with billiards'), img('amenities/games-2', 'Games lounge with table tennis')],
+    images: [img('amenities/games', 'Games lounge with billiards and table tennis')],
   },
   {
     id: 'podium',
     title: 'Podium Landscape Deck',
-    eyebrow: 'Podium · Aerial',
-    blurb: 'Green deck wrapped around the tower base',
+    eyebrow: 'Podium · Wellness',
+    blurb: 'Green deck & lawn lounge around the tower base',
     category: 'wellness',
-    images: [img('amenities/podium-aerial', 'Aerial view of the landscaped podium')],
+    images: [
+      img('amenities/podium-aerial', 'Aerial view of the landscaped podium'),
+      img('amenities/podium-lawn', 'Podium lawn with lounge chairs under a green canopy'),
+    ],
   },
 ]
 
