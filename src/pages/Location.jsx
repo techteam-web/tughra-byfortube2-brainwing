@@ -56,7 +56,7 @@ export default function Location() {
   const isDesktop = useIsDesktop()
   const isLand = useIsLandscapePhone()
   const isRoomy = useIsRoomy()
-  const isShortDesktop = useMediaQuery('(min-width: 1024px) and (max-height: 820px)')
+  const isShortDesktop = useMediaQuery('(min-width: 1024px) and (max-height: 900px)')
   // How the place list is laid out so the whole page fits on one screen.
   const listLayout = isDesktop ? (isShortDesktop ? 'grid' : 'column') : isRoomy || isLand ? 'grid' : 'row'
   const [params, setParams] = useSearchParams()
