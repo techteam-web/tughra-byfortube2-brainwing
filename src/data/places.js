@@ -1,7 +1,7 @@
 // Coordinates are [longitude, latitude].
-// The tower stands on the corner of Dr. Anandrao L. Nair Road and Souter Street (Meghraj Sethi Marg),
-// found by laying the ground floor plan over OpenStreetMap so both roads line up.
-export const TOWER = { name: 'Tughra Royale', area: 'Mumbai Central', at: [72.822215, 18.972194] }
+// The tower stands on the corner of Dr. Anandrao L. Nair Road and Souter Street (Meghraj Sethi Marg).
+// Exact building location supplied by the client: 18.972330979560734, 72.82237632533439.
+export const TOWER = { name: 'Tughra Royale', area: 'Mumbai Central', at: [72.82237632533439, 18.972330979560734] }
 
 // Well-known, highly rated places around Mumbai Central. Positions are taken from OpenStreetMap
 // (checked November 2026), each one checked by eye on the OpenStreetMap street map.
