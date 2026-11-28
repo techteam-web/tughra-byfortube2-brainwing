@@ -3,8 +3,8 @@
 // Exact building location supplied by the client: 18.972330979560734, 72.82237632533439.
 export const TOWER = { name: 'Tughra Royale', area: 'Mumbai Central', at: [72.82237632533439, 18.972330979560734] }
 
-// Well-known, highly rated places around Mumbai Central. Positions are taken from OpenStreetMap
-// (checked November 2026), each one checked by eye on the OpenStreetMap street map.
+// Well-known, highly rated places around Mumbai Central. Most positions were supplied by the client;
+// the rest come from OpenStreetMap (checked November 2026).
 const CATEGORIES_RAW = [
   {
     key: 'connectivity',
@@ -14,10 +14,10 @@ const CATEGORIES_RAW = [
       { name: 'Mumbai Central Metro', note: 'Aqua Line · Jagannath Shankarsheth Stn', at: [72.8213312761598, 18.970730764861575] },
       { name: 'Grant Road Station', note: 'Western Railway', at: [72.8162507663682, 18.96343532319463] },
       { name: 'Mahalaxmi Station', note: 'Western Railway', at: [72.82379635515282, 18.981858622927227] },
-      { name: 'Coastal Road', note: 'Haji Ali Access', at: [72.804948, 18.977319] },
-      { name: 'Bandra-Worli Sea Link', note: 'Worli Entry', at: [72.813145, 19.013779] },
-      { name: 'CSMT', note: 'Central & Harbour Lines', at: [72.835519, 18.939856] },
-      { name: 'Airport Terminal 2', note: 'International & Domestic Flights', at: [72.872593, 19.101357] },
+      { name: 'Coastal Road', note: 'Worli Access', at: [72.82648935552706, 19.044253353445445] },
+      { name: 'Bandra-Worli Sea Link', note: 'Worli Entry', at: [72.8166773658634, 19.034111515735727] },
+      { name: 'CSMT', note: 'Central & Harbour Lines', at: [72.8357071761353, 18.94015117385] },
+      { name: 'Airport Terminal 2', note: 'International & Domestic Flights', at: [72.87340451300028, 19.103820561169737] },
     ],
   },
   {
@@ -25,24 +25,24 @@ const CATEGORIES_RAW = [
     label: 'Landmarks',
     places: [
       { name: 'Mahalakshmi Temple', note: 'Historic Temple', at: [72.806025, 18.977391] },
-      { name: 'Haji Ali Dargah', note: 'Shrine in the Sea', at: [72.808993, 18.982823] },
-      { name: 'Mahalaxmi Racecourse', note: 'Racecourse & Open Grounds', at: [72.820598, 18.985204] },
+      { name: 'Haji Ali Dargah', note: 'Shrine in the Sea', at: [72.80899889768484, 18.98282067840381] },
+      { name: 'Mahalaxmi Racecourse', note: 'Racecourse & Open Grounds', at: [72.81982577354225, 18.984780548806043] },
       { name: 'Bhau Daji Lad Museum', note: 'City Museum, Rani Baug', at: [72.834794, 18.979102] },
-      { name: 'Girgaum Chowpatty', note: 'Seafront Beach', at: [72.812879, 18.954359] },
+      { name: 'Girgaum Chowpatty', note: 'Seafront Beach', at: [72.81462368338347, 18.954420255468246] },
       { name: 'Hanging Gardens', note: 'Malabar Hill Gardens', at: [72.804904, 18.956692] },
-      { name: 'Marine Drive', note: 'Queen’s Necklace Promenade', at: [72.818804, 18.949939] },
-      { name: 'Gateway of India', note: 'Heritage Monument', at: [72.834564, 18.921964] },
+      { name: 'Marine Drive', note: 'Queen’s Necklace Promenade', at: [72.82263750445065, 18.944011065877188] },
+      { name: 'Gateway of India', note: 'Heritage Monument', at: [72.83464650481335, 18.922018113532324] },
     ],
   },
   {
     key: 'healthcare',
     label: 'Healthcare',
     places: [
-      { name: 'Nair Hospital', note: 'Teaching Hospital', at: [72.821919, 18.974215] },
-      { name: 'Wockhardt Hospital', note: 'Super-Speciality Care', at: [72.823965, 18.97521] },
-      { name: 'Bhatia Hospital', note: 'Multi-Speciality Care', at: [72.813509, 18.965677] },
+      { name: 'Nair Hospital', note: 'Teaching Hospital', at: [72.82179349892209, 18.973053274618074] },
+      { name: 'Wockhardt Hospital', note: 'Super-Speciality Care', at: [72.82388192583713, 18.975224003514434] },
+      { name: 'Bhatia Hospital', note: 'Multi-Speciality Care', at: [72.81323667330311, 18.965867932392847] },
       { name: 'Jaslok Hospital', note: 'Multi-Speciality Care', at: [72.809926, 18.971701] },
-      { name: 'Sir H. N. Reliance Hospital', note: 'Multi-Speciality Care', at: [72.820205, 18.958765] },
+      { name: 'Sir H. N. Reliance Hospital', note: 'Multi-Speciality Care', at: [72.82033311519925, 18.958774939036584] },
       { name: 'Breach Candy Hospital', note: 'Multi-Speciality Care', at: [72.804268, 18.972566] },
       { name: 'Saifee Hospital', note: 'Multi-Speciality Care', at: [72.818195, 18.952521] },
     ],
@@ -51,12 +51,12 @@ const CATEGORIES_RAW = [
     key: 'hospitality',
     label: 'Hospitality',
     places: [
-      { name: 'The St. Regis Mumbai', note: 'Luxury Hotel, Palladium', at: [72.824012, 18.994093] },
-      { name: 'Four Seasons Mumbai', note: 'Luxury Hotel', at: [72.82036, 18.994118] },
-      { name: 'ITC Grand Central', note: 'Luxury Hotel', at: [72.838228, 18.998235] },
+      { name: 'The St. Regis Mumbai', note: 'Luxury Hotel, Palladium', at: [72.82372043670141, 18.995171400588944] },
+      { name: 'Four Seasons Mumbai', note: 'Luxury Hotel', at: [72.82055793141221, 18.994984003986865] },
+      { name: 'ITC Grand Central', note: 'Luxury Hotel', at: [72.83872472124136, 18.999144728750828] },
       { name: 'The Oberoi Mumbai', note: 'Luxury Hotel', at: [72.820585, 18.926984] },
       { name: 'Trident Nariman Point', note: 'Seafront Hotel', at: [72.821126, 18.927838] },
-      { name: 'The Taj Mahal Palace', note: 'Heritage Hotel', at: [72.833285, 18.921778] },
+      { name: 'The Taj Mahal Palace', note: 'Heritage Hotel', at: [72.83319317372491, 18.92169981272087] },
     ],
   },
   {
@@ -65,7 +65,7 @@ const CATEGORIES_RAW = [
     places: [
       { name: 'Peninsula Business Park', note: 'Lower Parel Offices', at: [72.829247, 18.998704] },
       { name: 'One Indiabulls Centre', note: 'Lower Parel Office Towers', at: [72.832934, 19.00674] },
-      { name: 'Bombay Stock Exchange', note: 'Dalal Street, Fort', at: [72.83335, 18.929868] },
+      { name: 'Bombay Stock Exchange', note: 'Dalal Street, Fort', at: [72.83340560839316, 18.930003309263377] },
       { name: 'Nariman Point', note: 'Business District', at: [72.823586, 18.927089] },
       { name: 'World Trade Centre', note: 'Cuffe Parade', at: [72.817349, 18.914445] },
       { name: 'Bandra Kurla Complex', note: 'Business District', at: [72.866638, 19.063875] },
@@ -82,6 +82,7 @@ const CATEGORIES_RAW = [
       { name: 'Walsingham House School', note: 'Girls’ School, Malabar Hill', at: [72.796187, 18.953764] },
       { name: 'St. Xavier’s College', note: 'College, Fort', at: [72.831361, 18.943102] },
       { name: 'Cathedral & John Connon', note: 'School, Fort', at: [72.832551, 18.936118] },
+      { name: 'Bombay Scottish School', note: 'School, Mahim', at: [72.83911477696665, 19.034425309535248] },
     ],
   },
 ]
@@ -174,9 +175,9 @@ function curve(a, b, steps = 48) {
 export const VIEW_LANDMARKS = [
   // The open sea seen past the Haji Ali bay (due west it is hidden behind Malabar Hill).
   { label: 'Arabian Sea', at: [72.8, 18.985], dot: 'gold', placeId: null },
-  { label: 'Mahalaxmi Racecourse', at: [72.820598, 18.985204], dot: 'blue', placeId: 'landmarks:Mahalaxmi Racecourse' },
-  { label: 'Haji Ali Dargah', at: [72.808993, 18.982823], dot: 'blue', placeId: 'landmarks:Haji Ali Dargah' },
-  { label: 'Marine Drive', at: [72.818804, 18.949939], dot: 'blue', placeId: 'landmarks:Marine Drive' },
+  { label: 'Mahalaxmi Racecourse', at: [72.81982577354225, 18.984780548806043], dot: 'blue', placeId: 'landmarks:Mahalaxmi Racecourse' },
+  { label: 'Haji Ali Dargah', at: [72.80899889768484, 18.98282067840381], dot: 'blue', placeId: 'landmarks:Haji Ali Dargah' },
+  { label: 'Marine Drive', at: [72.82263750445065, 18.944011065877188], dot: 'blue', placeId: 'landmarks:Marine Drive' },
 ]
 
 // What lies in each compass direction from the tower (for the "Facing …" pill).
