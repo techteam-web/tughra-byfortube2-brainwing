@@ -136,8 +136,10 @@ export default function Location() {
         `<span class="block h-3 w-3 rounded-full border-2 border-[#16110e] bg-[#d4a85a] shadow-[0_0_0_4px_rgb(212_168_90/0.3)]"></span>
          <span class="rounded-md bg-[#d4a85a] px-2.5 py-1 text-[12px] font-semibold text-[#1a130d] whitespace-nowrap">${TOWER.name} · ${TOWER.area}</span>`,
       ),
+      // The dot's centre sits exactly on the tower at every zoom (the dot is 12px, so lift it 6px);
+      // the label hangs below it.
       anchor: 'top',
-      offset: [0, 36], // clear of the tower's footprint
+      offset: [0, -6],
     })
       .setLngLat(TOWER.at)
       .addTo(map)

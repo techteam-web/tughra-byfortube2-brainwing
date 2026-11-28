@@ -12,10 +12,10 @@ const FLOCK = [
   ['kite', 110], ['kite', 120], ['kite', 95],
 ]
 
-// The area the birds roam: a circle around the middle of the opening view. A bird that reaches the
-// edge turns back in, so they keep crossing the whole map without circling the tower.
-const MIDDLE = [0, 60]
-const RANGE = 400
+// The area the birds roam: about 4 km across on the map, centred on the tower. A bird that reaches
+// the edge turns back in, so they keep crossing the whole map without circling the tower.
+const MIDDLE = [0, 0]
+const RANGE = 1300
 
 /** Repeatable pseudo-random number in [0, 1). */
 const rand = (a, b = 0) => {
