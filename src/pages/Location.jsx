@@ -131,15 +131,13 @@ export default function Location() {
     })
 
     new Marker({
+      // Just a gold dot, centred exactly on the tower at every zoom; no label, so it never covers
+      // routes or the other markers.
       element: markerEl(
-        'flex flex-col items-center gap-2',
-        `<span class="block h-3 w-3 rounded-full border-2 border-[#16110e] bg-[#d4a85a] shadow-[0_0_0_4px_rgb(212_168_90/0.3)]"></span>
-         <span class="rounded-md bg-[#d4a85a] px-2.5 py-1 text-[12px] font-semibold text-[#1a130d] whitespace-nowrap">${TOWER.name} · ${TOWER.area}</span>`,
+        'block h-3 w-3 rounded-full border-2 border-[#16110e] bg-[#d4a85a] shadow-[0_0_0_4px_rgb(212_168_90/0.3)]',
+        `<span class="sr-only">${TOWER.name}, ${TOWER.area}</span>`,
       ),
-      // The dot's centre sits exactly on the tower at every zoom (the dot is 12px, so lift it 6px);
-      // the label hangs below it.
-      anchor: 'top',
-      offset: [0, -6],
+      anchor: 'center',
     })
       .setLngLat(TOWER.at)
       .addTo(map)
@@ -225,7 +223,7 @@ export default function Location() {
       destMarkerRef.current = new Marker({
         element: markerEl(
           'flex flex-col items-center gap-1.5',
-          `<span class="rounded-md border border-[#4d9bff] bg-[#16110e]/95 px-2.5 py-1 text-[12px] font-semibold text-[#f5f0e8] whitespace-nowrap">${selected.name} · ${trip.minutes} min (${trip.km.toFixed(1)} km)</span>
+          `<span class="rounded-md border border-[#4d9bff]/70 bg-[#16110e]/90 px-2 py-0.5 text-[11px] font-semibold text-[#f5f0e8] whitespace-nowrap">${selected.name}</span>
            <span class="block h-3.5 w-3.5 rounded-full border-2 border-[#4d9bff] bg-[#16110e]"></span>`,
         ),
         anchor: 'bottom',
