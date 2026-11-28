@@ -96,8 +96,10 @@ export default function Views() {
       const hosts = LANDMARKS.map((l) => {
         const el = document.createElement('div')
         el.className = 'pano-hotspot'
-        const pitchDown = -Math.atan(floor.height / (l.km * 1000))
-        scene.hotspotContainer().createHotspot(el, { yaw: l.yaw, pitch: pitchDown })
+        // Places sit where they are seen, below the horizon by the angle down from this floor
+        // (in Marzipano a positive pitch looks down); an area (the sea) is named just above it.
+        const pitch = l.area ? -0.035 : Math.atan(floor.height / (l.km * 1000))
+        scene.hotspotContainer().createHotspot(el, { yaw: l.yaw, pitch })
         return el
       })
       entry = { scene, hosts }
@@ -136,7 +138,7 @@ export default function Views() {
           title={l.placeId ? 'Show on the location map' : 'Open the location map'}
         >
           <span className={`h-1.5 w-1.5 rounded-full ${l.dot === 'gold' ? 'bg-gold' : 'bg-route'}`} />
-          {l.label} · {l.km.toFixed(1)} km
+          {l.area ? l.label : `${l.label} · ${l.km.toFixed(1)} km`}
         </button>,
         hotspotHosts[i],
         l.label,

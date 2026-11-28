@@ -173,8 +173,9 @@ function curve(a, b, steps = 48) {
 
 // Landmark tags shown on the 360° view. `placeId` links to the Location page.
 export const VIEW_LANDMARKS = [
-  // The open sea seen past the Haji Ali bay (due west it is hidden behind Malabar Hill).
-  { label: 'Arabian Sea', at: [72.8, 18.985], dot: 'gold', placeId: null },
+  // The open sea off the Mahalakshmi coast, left of Haji Ali in the view. It names an area, so it is
+  // shown just above the horizon and without a distance.
+  { label: 'Arabian Sea', at: [72.79929, 18.98076], dot: 'gold', placeId: null, area: true },
   { label: 'Mahalaxmi Racecourse', at: [72.81982577354225, 18.984780548806043], dot: 'blue', placeId: 'landmarks:Mahalaxmi Racecourse' },
   { label: 'Haji Ali Dargah', at: [72.80899889768484, 18.98282067840381], dot: 'blue', placeId: 'landmarks:Haji Ali Dargah' },
   { label: 'Marine Drive', at: [72.82263750445065, 18.944011065877188], dot: 'blue', placeId: 'landmarks:Marine Drive' },
