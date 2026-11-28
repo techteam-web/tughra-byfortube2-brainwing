@@ -14,7 +14,7 @@ const CATEGORIES_RAW = [
       { name: 'Mumbai Central Metro', note: 'Aqua Line · Jagannath Shankarsheth Stn', at: [72.8213312761598, 18.970730764861575] },
       { name: 'Grant Road Station', note: 'Western Railway', at: [72.8162507663682, 18.96343532319463] },
       { name: 'Mahalaxmi Station', note: 'Western Railway', at: [72.82379635515282, 18.981858622927227] },
-      { name: 'Coastal Road', note: 'Worli Access', at: [72.82648935552706, 19.044253353445445] },
+      { name: 'Coastal Road', note: 'Worli Access', at: [72.82643417134376, 19.044122723145186] },
       { name: 'Bandra-Worli Sea Link', note: 'Worli Entry', at: [72.8166773658634, 19.034111515735727] },
       { name: 'CSMT', note: 'Central & Harbour Lines', at: [72.8357071761353, 18.94015117385] },
       { name: 'Airport Terminal 2', note: 'International & Domestic Flights', at: [72.87340451300028, 19.103820561169737] },
