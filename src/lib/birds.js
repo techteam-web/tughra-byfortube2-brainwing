@@ -1,46 +1,49 @@
-import { BufferGeometry, DoubleSide, Float32BufferAttribute, Group, Mesh, MeshLambertMaterial } from 'three'
+import { BufferGeometry, DoubleSide, Float32BufferAttribute, Group, Mesh, MeshBasicMaterial } from 'three'
 
-// Flocks of birds flying across the map around the tower (metres, Y up; the building layer places
-// this group at the tower, facing north). They are drawn several times life size so they show at map zoom levels.
-const WINGSPAN = 28
-const BODY = 9.5
-const COLOURS = { body: '#120d0a', tip: '#d4a85a' } // near-black birds with the site's gold on the wing tips
-
-// Each flock follows its own looping route over the map (a Lissajous curve), crossing the view in
-// front of and behind the tower. Coordinates are metres from the tower: x east, z south (so negative
-// z is north, the way the map opens). Speeds in radians a second.
-const FLOCKS = [
-  { count: 7, centre: [0, -40], size: [300, 170], speed: [0.05, 0.075], phase: [0, 1.2], height: 120 },
-  { count: 5, centre: [-60, -300], size: [340, 200], speed: [0.04, 0.062], phase: [2.1, 0.4], height: 170 },
-  { count: 6, centre: [130, 80], size: [260, 140], speed: [0.058, 0.044], phase: [4.0, 2.6], height: 90 },
-  { count: 4, centre: [-180, -150], size: [220, 260], speed: [0.066, 0.05], phase: [1.1, 4.4], height: 145 },
+// A few birds crossing the map around the tower (metres, Y up; x east, z south; the building layer
+// places this group at the tower, facing north). Drawn several times life size so they show at map
+// zoom. Each bird is one flat colour, unlit, so the map light never tints it.
+const BIRDS = [
+  // Small black birds.
+  { colour: '#000000', span: 17, speed: 20, height: 95 },
+  { colour: '#000000', span: 16, speed: 23, height: 130 },
+  { colour: '#000000', span: 18, speed: 18, height: 70 },
+  // White birds.
+  { colour: '#ffffff', span: 26, speed: 16, height: 150 },
+  { colour: '#ffffff', span: 24, speed: 19, height: 115 },
+  { colour: '#ffffff', span: 27, speed: 15, height: 175 },
+  { colour: '#ffffff', span: 25, speed: 17, height: 85 },
+  { colour: '#ffffff', span: 26, speed: 21, height: 140 },
 ]
+
+// Every crossing is a straight line through the area around the tower, LENGTH metres long, at a
+// random direction and a random distance from the tower, with a gentle side-to-side drift.
+const LENGTH = 1300
+const SPREAD = 380 // how far a crossing may pass from the middle of the view
+const MIDDLE = [0, -180] // the opening view shows more of the map north of the tower
+
+/** Repeatable pseudo-random number in [0, 1) for a bird and crossing. */
+const rand = (a, b) => {
+  const v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453
+  return v - Math.floor(v)
+}
 
 function mesh(points, material) {
   const geometry = new BufferGeometry()
   geometry.setAttribute('position', new Float32BufferAttribute(points.flat(), 3))
-  geometry.computeVertexNormals()
   return new Mesh(geometry, material)
 }
 
-/** One bird facing +Z: a slim body and two wings hinged along the body, gold at the tips. */
-function makeBird(materials) {
+/** One bird facing +Z: a slim body and two swept wings hinged along the body. */
+function makeBird(span, material) {
   const bird = new Group()
-  const h = WINGSPAN / 2
-  bird.add(
-    mesh(
-      [
-        [0, 0.9, BODY * 0.55], [-1.3, 0, -BODY * 0.45], [1.3, 0, -BODY * 0.45],
-        [0, -0.9, BODY * 0.55], [1.3, 0, -BODY * 0.45], [-1.3, 0, -BODY * 0.45],
-      ],
-      materials.body,
-    ),
-  )
+  const h = span / 2
+  const body = span * 0.34
+  const w = span * 0.05
+  bird.add(mesh([[0, w, body * 0.55], [-w, 0, -body * 0.45], [w, 0, -body * 0.45], [0, -w, body * 0.55], [w, 0, -body * 0.45], [-w, 0, -body * 0.45]], material))
   const wing = (s) => {
     const hinge = new Group()
-    const m = s * h * 0.5 // where the gold tip starts
-    hinge.add(mesh([[0, 0, 2.3], [0, 0, -1.9], [m, 0, -2.6], [0, 0, 2.3], [m, 0, -2.6], [m, 0, -0.9]], materials.body))
-    hinge.add(mesh([[m, 0, -0.9], [m, 0, -2.6], [s * h, 0, -3]], materials.tip))
+    hinge.add(mesh([[0, 0, span * 0.08], [0, 0, -span * 0.07], [s * h, 0, -span * 0.11]], material))
     bird.add(hinge)
     return hinge
   }
@@ -49,67 +52,47 @@ function makeBird(materials) {
   return bird
 }
 
-/** Where a flock is at time t (seconds). */
-function route(flock, t, cx, cz) {
-  const [ax, az] = flock.size
-  const [wx, wz] = flock.speed
-  const [px, pz] = flock.phase
-  return [cx + flock.centre[0] + ax * Math.sin(wx * t + px), cz + flock.centre[1] + az * Math.sin(wz * t + pz)]
+/** Position, heading and sway of bird `i` after flying `travelled` metres. */
+function locate(i, travelled) {
+  const crossing = Math.floor(travelled / LENGTH)
+  const s = travelled - crossing * LENGTH
+  const angle = rand(i, crossing) * Math.PI * 2
+  const offset = (rand(i + 50, crossing) - 0.5) * 2 * SPREAD
+  const dx = Math.sin(angle)
+  const dz = Math.cos(angle)
+  // From one end of the line to the other, drifting gently sideways.
+  const along = s - LENGTH / 2
+  const side = offset + Math.sin(s / 260 + i) * 45
+  return [MIDDLE[0] + dx * along + dz * side, MIDDLE[1] + dz * along - dx * side, angle, Math.cos(s / 260 + i)]
 }
 
-/**
- * Builds the flocks around `centre` ({x, z} in model space, the tower).
- * Returns the group to add to the scene and `update(seconds)` to move it.
- */
-export function createBirds(centre) {
-  const materials = {
-    body: new MeshLambertMaterial({ color: COLOURS.body, side: DoubleSide }),
-    tip: new MeshLambertMaterial({ color: COLOURS.tip, side: DoubleSide }),
-  }
+export function createBirds() {
   const group = new Group()
-  const birds = []
-  FLOCKS.forEach((flock, f) => {
-    for (let i = 0; i < flock.count; i++) {
-      const bird = makeBird(materials)
-      bird.rotation.order = 'YXZ'
-      // A loose V: alternate sides, each a little further back, with a small personal wobble.
-      const rank = Math.ceil(i / 2)
-      bird.userData.flock = flock
-      bird.userData.side = (i % 2 ? 1 : -1) * rank * 20 + Math.sin(i * 12.9898 + f) * 5
-      bird.userData.back = rank * 24 + Math.cos(i * 78.233 + f) * 5
-      bird.userData.lift = Math.sin(i * 37.719 + f) * 6
-      bird.userData.phase = i * 1.7 + f * 2.3
-      group.add(bird)
-      birds.push(bird)
-    }
+  const materials = new Map()
+  const birds = BIRDS.map((spec, i) => {
+    if (!materials.has(spec.colour)) materials.set(spec.colour, new MeshBasicMaterial({ color: spec.colour, side: DoubleSide }))
+    const bird = makeBird(spec.span, materials.get(spec.colour))
+    bird.rotation.order = 'YXZ'
+    bird.userData.spec = spec
+    bird.userData.start = rand(i + 9, 3) * LENGTH * 3
+    group.add(bird)
+    return bird
   })
 
   function update(seconds) {
-    for (const bird of birds) {
-      const { flock, side, back, lift, phase, left, right } = bird.userData
-      // Direction of travel from two nearby points on the route.
-      const [x0, z0] = route(flock, seconds, centre.x, centre.z)
-      const [x1, z1] = route(flock, seconds + 1, centre.x, centre.z)
-      const [x2, z2] = route(flock, seconds + 2, centre.x, centre.z)
-      const heading = Math.atan2(x1 - x0, z1 - z0)
-      let turn = Math.atan2(x2 - x1, z2 - z1) - heading
-      turn = Math.atan2(Math.sin(turn), Math.cos(turn))
-      // Place the bird in the V, relative to the flock's heading.
-      const fx = Math.sin(heading)
-      const fz = Math.cos(heading)
-      bird.position.set(
-        x0 - fx * back + fz * side,
-        flock.height + lift + Math.sin(seconds * 0.8 + phase) * 4,
-        z0 - fz * back - fx * side,
-      )
-      // Face the way the flock is going and lean into its turns.
-      bird.rotation.set(0, heading, Math.max(-0.6, Math.min(0.6, -turn * 6)))
+    birds.forEach((bird, i) => {
+      const { spec, start, left, right } = bird.userData
+      const [x, z, angle, sway] = locate(i, start + seconds * spec.speed)
+      const phase = i * 1.7
+      bird.position.set(x, spec.height + Math.sin(seconds * 0.7 + phase) * 4, z)
+      // Face along the crossing, turned slightly with the drift, and lean into it.
+      bird.rotation.set(0, angle - sway * 0.17, sway * 0.25)
       // Flap for a while, then glide with the wings held slightly up.
-      const glide = Math.sin(seconds * 0.45 + phase) > 0.55
-      const beat = glide ? 0.18 : Math.sin(seconds * 9 + phase * 3) * 0.55 + 0.1
+      const glide = Math.sin(seconds * 0.45 + phase) > 0.5
+      const beat = glide ? 0.15 : Math.sin(seconds * 8 + phase * 3) * 0.55 + 0.1
       left.rotation.z = -beat
       right.rotation.z = beat
-    }
+    })
   }
 
   update(0)
@@ -118,7 +101,7 @@ export function createBirds(centre) {
     update,
     dispose() {
       group.traverse((node) => node.geometry?.dispose())
-      Object.values(materials).forEach((m) => m.dispose())
+      materials.forEach((m) => m.dispose())
     },
   }
 }

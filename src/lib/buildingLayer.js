@@ -82,7 +82,7 @@ export function createBuildingLayer(lngLat, { onLoad, onError } = {}) {
   let removed = false
   let mapRef = null
   // Gulls circling the tower. They keep the map redrawing while they fly.
-  const birds = createBirds({ x: 0, z: 0 })
+  const birds = createBirds()
   // Undo the building's own turn so the birds' routes use true map directions, centred on the tower.
   birds.group.position.set(FOOTPRINT_CENTRE.x, 0, FOOTPRINT_CENTRE.z)
   birds.group.rotation.y = (BUILDING_HEADING_DEG * Math.PI) / 180
