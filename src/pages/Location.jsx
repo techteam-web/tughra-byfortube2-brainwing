@@ -268,8 +268,8 @@ export default function Location() {
           </button>
         ))}
       </div>
-      <Segmented label="Travel mode" options={MODE_OPTIONS} value={mode} onChange={setMode} size="sm" className="mt-3 shrink-0 self-start bg-white/5 compact:mt-2 land:mt-1.5" />
-      <ul className={`${LIST_CLASS[listLayout]} mt-4 compact:mt-2 land:mt-1.5`}>
+      <Segmented label="Travel mode" options={MODE_OPTIONS} value={mode} onChange={setMode} size="sm" className="mt-3 shrink-0 self-start bg-white/5 compact:mt-2 land:mt-1.5 [@media(max-height:340px)]:mt-1" />
+      <ul className={`${LIST_CLASS[listLayout]} mt-4 compact:mt-2 land:mt-1.5 [@media(max-height:340px)]:mt-1`}>
         {category.places.map((p) => {
           const active = p.id === selectedId
           const trip = tripFor(p)
@@ -279,7 +279,7 @@ export default function Location() {
                 type="button"
                 onClick={() => choosePlace(p)}
                 aria-current={active ? 'true' : undefined}
-                className={`flex h-full w-full items-center justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-left transition-colors compact:py-1.5 land:px-2.5 land:py-1 ${
+                className={`flex h-full w-full items-center justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-left transition-colors compact:py-1.5 land:px-2.5 land:py-1 [@media(max-height:340px)]:py-0.5 ${
                   active ? 'border-route/70 bg-route/10' : 'border-white/8 bg-white/[0.03] hover:bg-white/[0.06]'
                 }`}
               >
@@ -326,9 +326,9 @@ export default function Location() {
         <div className="relative min-h-0 flex-1">
           <div ref={containerRef} className="absolute inset-0" />
         </div>
-        <div className="solid-panel relative -mt-3 flex shrink-0 flex-col rounded-t-2xl border-b-0 px-4 pb-6 pt-3 md:px-6 md:pt-4 compact:pt-2 land:mt-0 land:w-[58%] land:justify-center land:rounded-none land:px-3 land:pb-5 land:pt-1">
+        <div className="solid-panel relative -mt-3 flex shrink-0 flex-col rounded-t-2xl border-b-0 px-4 pb-6 pt-3 md:px-6 md:pt-4 compact:pt-2 land:mt-0 land:w-[58%] land:justify-center land:rounded-none land:px-3 land:pb-5 land:pt-1 [@media(max-height:340px)]:pb-1">
           {routeBar}
-          <div className="mt-3 flex flex-col compact:mt-2 land:mt-1.5">{panel}</div>
+          <div className="mt-3 flex flex-col compact:mt-2 land:mt-1.5 [@media(max-height:340px)]:mt-1">{panel}</div>
         </div>
       </div>
     )
