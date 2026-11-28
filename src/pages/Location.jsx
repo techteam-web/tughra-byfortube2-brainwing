@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { LngLatBounds, Map as MapLibreMap, Marker, NavigationControl, setWorkerUrl } from 'maplibre-gl'
 import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
-import { Car, Footprints, Rotate3d, RotateCcw } from 'lucide-react'
+import { Car, Footprints, RotateCcw } from 'lucide-react'
 import { PLACE_CATEGORIES, TOWER, TRAVEL_MODES, estimateTrip, fetchRoute } from '../data/places'
 import { applyDarkStyle } from '../lib/mapStyle'
 import { prefersReducedMotion, useIsDesktop, useIsLandscapePhone, useIsRoomy, useMediaQuery } from '../lib/hooks'
@@ -13,12 +13,14 @@ import { MobileHeader } from '../components/MobileNav'
 setWorkerUrl(mapWorkerUrl)
 
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty'
-// Close and tilted enough to see the 3D tower on its plot.
-const HOME_VIEW = { center: TOWER.at, zoom: 16.3, pitch: 62, bearing: -20 }
+// Low and close, looking at the tower from the front rather than from above.
+const HOME_VIEW = { center: TOWER.at, zoom: 16.6, pitch: 76, bearing: -20 }
 const EMPTY = { type: 'FeatureCollection', features: [] }
-// The slow turn around the tower: a quarter turn at a time, one full turn a minute.
+// The slow turn around the tower: a quarter turn at a time, one full turn a minute. It pauses while
+// the visitor moves the map and starts again this long after they stop.
 const SPIN_STEP_DEG = 90
 const SPIN_STEP_MS = 15000
+const SPIN_RESUME_MS = 4000
 const MODE_OPTIONS = [
   { value: 'drive', label: 'By Car', Icon: Car },
   { value: 'walk', label: 'Walking', Icon: Footprints },
@@ -34,15 +36,15 @@ const fmtTrip = (t) => `${t.minutes} min`
 const fmtKm = (t) => `${t.km.toFixed(1)} km`
 
 /**
- * The opening view. The tower's plot sits below the middle so the whole tower fits above it,
- * and small maps (phones) start a little further out.
+ * The opening view. The zoom follows the map's height so the tower fills about half of it on any
+ * screen (HOME_VIEW.zoom is right for a 768px-tall map), and its plot sits below the middle so the
+ * tower stands in the middle of the map.
  */
 function homeView(map) {
-  const phone = window.innerWidth < 1024
-  const short = phone && window.innerHeight < 640 // little map: keep the label clear of the map credits
-  const zoom = phone ? (short ? 15.25 : 15.9) : HOME_VIEW.zoom
-  const drop = short ? 0.1 : phone ? 0.18 : 0.13
-  return { ...HOME_VIEW, zoom, offset: [0, Math.round(map.getContainer().clientHeight * drop)] }
+  const height = map.getContainer().clientHeight || 768
+  const zoom = Math.min(17, Math.max(15, HOME_VIEW.zoom + Math.log2(height / 768)))
+  const drop = window.innerWidth < 1024 ? 0.22 : 0.2
+  return { ...HOME_VIEW, zoom, offset: [0, Math.round(height * drop)] }
 }
 
 function markerEl(className, html) {
@@ -66,9 +68,6 @@ export default function Location() {
   const [selectedId, setSelectedId] = useState(linked?.id ?? null)
   const [trips, setTrips] = useState({}) // `${mode}:${id}` -> trip
   const [mapReady, setMapReady] = useState(false)
-  // The map turns slowly around the tower, so it is seen from every side, until someone moves the map.
-  const [spinning, setSpinning] = useState(() => !linked && !prefersReducedMotion())
-  const spinRef = useRef(spinning) // read inside map events, which fire before React re-renders
 
   const containerRef = useRef(null)
   const mapRef = useRef(null)
@@ -94,7 +93,7 @@ export default function Location() {
       ...HOME_VIEW,
       zoom: 12.6,
       pitch: 0,
-      maxPitch: 70,
+      maxPitch: 80,
       attributionControl: { compact: true },
     })
     mapRef.current = map
@@ -150,41 +149,37 @@ export default function Location() {
     }
   }, [isDesktop])
 
-  const setSpin = useCallback((on) => {
-    spinRef.current = on
-    setSpinning(on)
-  }, [])
-
-  // Turn around the tower. Each quarter turn starts when the last one (or the opening flight) ends.
+  // The map always turns slowly around the tower, so it is seen from every side. It pauses while
+  // the visitor moves the map or looks at a route.
+  const autoTurn = !selected && !prefersReducedMotion()
   useEffect(() => {
     const map = mapRef.current
-    if (!mapReady || !map || !spinning) return
+    if (!mapReady || !map || !autoTurn) return
+    let active = true
+    let timer = 0
+    // Each quarter turn starts when the last one (or the opening flight) ends.
     const turn = () => {
-      if (!spinRef.current) return
-      map.easeTo({ bearing: map.getBearing() + SPIN_STEP_DEG, around: TOWER.at, duration: SPIN_STEP_MS, easing: (t) => t })
+      if (active) map.easeTo({ bearing: map.getBearing() + SPIN_STEP_DEG, around: TOWER.at, duration: SPIN_STEP_MS, easing: (t) => t })
     }
-    // Any touch, click or wheel on the map hands it back to the visitor.
-    const stop = () => setSpin(false)
+    const pause = () => {
+      active = false
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        active = true
+        if (!map.isMoving()) turn()
+      }, SPIN_RESUME_MS)
+    }
     const container = map.getContainer()
     const inputs = ['pointerdown', 'touchstart', 'wheel']
-    inputs.forEach((type) => container.addEventListener(type, stop, { capture: true, passive: true }))
+    inputs.forEach((type) => container.addEventListener(type, pause, { capture: true, passive: true }))
     map.on('moveend', turn)
     if (!map.isMoving()) turn()
     return () => {
-      inputs.forEach((type) => container.removeEventListener(type, stop, { capture: true }))
+      clearTimeout(timer)
+      inputs.forEach((type) => container.removeEventListener(type, pause, { capture: true }))
       map.off('moveend', turn)
     }
-  }, [mapReady, spinning, setSpin])
-
-  const toggleSpin = () => {
-    const map = mapRef.current
-    if (spinning) {
-      setSpin(false)
-      map?.stop()
-    } else {
-      resetMap() // back to the tower first, then it turns
-    }
-  }
+  }, [mapReady, autoTurn])
 
   // Estimate → real route times for the visible list, one request at a time.
   useEffect(() => {
@@ -240,7 +235,6 @@ export default function Location() {
   }, [selected, mode, mapReady, padding])
 
   const choosePlace = (p) => {
-    setSpin(false)
     setSelectedId(p.id)
     const next = new URLSearchParams(params)
     next.set('place', p.id)
@@ -252,10 +246,7 @@ export default function Location() {
     setParams({}, { replace: true })
     const map = mapRef.current
     if (!map) return
-    setSpin(false)
     map.flyTo({ ...homeView(map), duration: prefersReducedMotion() ? 0 : 1400 })
-    // Start turning again once back at the tower.
-    if (!prefersReducedMotion()) map.once('moveend', () => mapRef.current === map && setSpin(true))
   }
 
   const panel = (
@@ -321,19 +312,7 @@ export default function Location() {
       ) : (
         <span className="min-w-0 truncate text-ink/65">Pick a place to see the route</span>
       )}
-      <button
-        type="button"
-        onClick={toggleSpin}
-        aria-pressed={spinning}
-        aria-label={spinning ? 'Stop turning around the tower' : 'Turn around the tower'}
-        title={spinning ? 'Stop turning' : 'See the tower from every side'}
-        className={`ml-auto grid h-8 w-8 shrink-0 place-items-center rounded-full border transition-colors ${
-          spinning ? 'border-gold bg-gold text-[#1a130d]' : 'border-white/20 text-ink hover:border-gold/60'
-        }`}
-      >
-        <Rotate3d size={15} />
-      </button>
-      <button type="button" onClick={resetMap} className="btn-outline h-8 shrink-0 whitespace-nowrap px-3.5 text-[12px]">
+      <button type="button" onClick={resetMap} className="btn-outline ml-auto h-8 shrink-0 whitespace-nowrap px-3.5 text-[12px]">
         <RotateCcw size={13} /> Reset Map
       </button>
     </div>
